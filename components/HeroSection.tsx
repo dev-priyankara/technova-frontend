@@ -2,23 +2,23 @@ import Link from "next/link";
 
 export default function Hero() {
   return (
-    <section className="overflow-hidden bg-slate-50">
-      <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-12 lg:px-8 lg:py-24">
+    <section className="overflow-hidden">
+      <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-24 sm:px-6 sm:py-28 lg:grid-cols-2 lg:gap-12 lg:px-8 lg:py-36">
         {/* Hero Content */}
         <div className="relative z-10">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-900">
-            <span className="h-2 w-2 rounded-full bg-blue-700" />
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-500/10 px-4 py-2 text-sm font-semibold text-blue-200">
+            <span className="h-2 w-2 rounded-full bg-blue-400" />
             Your Trusted Computer Store
           </div>
 
-          <h1 className="max-w-2xl text-4xl font-extrabold leading-tight tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+          <h1 className="max-w-2xl text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
             Power Your
-            <span className="block text-blue-900">
+            <span className="block text-blue-400">
               Next Generation.
             </span>
           </h1>
 
-          <p className="mt-6 max-w-xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
+          <p className="mt-6 max-w-xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
             Discover powerful computers, high-performance components, and
             essential accessories. Find the right technology for gaming,
             studying, and professional work at TECHNOVA Computers.
@@ -28,7 +28,7 @@ export default function Hero() {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
               href="/products"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-7 py-3.5 font-semibold text-blue-900 shadow-lg shadow-blue-900/15 transition-all hover:-translate-y-0.5 hover:border-blue-900 hover:bg-blue-50"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/20 bg-white px-7 py-3.5 font-semibold text-blue-950 shadow-lg shadow-blue-950/30 transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50"
             >
               Shop Now
               <svg
@@ -45,37 +45,37 @@ export default function Hero() {
 
             <Link
               href="/categories"
-              className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-7 py-3.5 font-semibold text-slate-800 transition-colors hover:border-blue-900 hover:text-blue-900"
+              className="inline-flex items-center justify-center rounded-lg border border-white/20 bg-white/10 px-7 py-3.5 font-semibold text-white transition-colors hover:border-blue-300 hover:bg-white/20"
             >
               Explore Categories
             </Link>
           </div>
 
           {/* Trust Indicators */}
-          <div className="mt-10 grid max-w-lg grid-cols-3 gap-4 border-t border-slate-200 pt-6">
+          <div className="mt-10 grid max-w-lg grid-cols-3 gap-4 border-t border-white/10 pt-6">
             <div>
-              <p className="text-sm font-bold text-slate-900 sm:text-base">
+              <p className="text-sm font-bold text-white sm:text-base">
                 Quality
               </p>
-              <p className="mt-1 text-xs leading-5 text-slate-500 sm:text-sm">
+              <p className="mt-1 text-xs leading-5 text-slate-400 sm:text-sm">
                 Trusted hardware
               </p>
             </div>
 
             <div>
-              <p className="text-sm font-bold text-slate-900 sm:text-base">
+              <p className="text-sm font-bold text-white sm:text-base">
                 Great Value
               </p>
-              <p className="mt-1 text-xs leading-5 text-slate-500 sm:text-sm">
+              <p className="mt-1 text-xs leading-5 text-slate-400 sm:text-sm">
                 Competitive prices
               </p>
             </div>
 
             <div>
-              <p className="text-sm font-bold text-slate-900 sm:text-base">
+              <p className="text-sm font-bold text-white sm:text-base">
                 Expert Help
               </p>
-              <p className="mt-1 text-xs leading-5 text-slate-500 sm:text-sm">
+              <p className="mt-1 text-xs leading-5 text-slate-400 sm:text-sm">
                 Product guidance
               </p>
             </div>

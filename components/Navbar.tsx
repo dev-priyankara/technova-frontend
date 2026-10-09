@@ -15,8 +15,8 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white shadow-sm">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/70 shadow-sm backdrop-blur-md">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link
           href="/"
@@ -28,22 +28,22 @@ export default function Navbar() {
           </div>
 
           <div>
-            <span className="block text-lg font-extrabold tracking-tight text-slate-950 sm:text-xl">
+            <span className="block text-lg font-extrabold tracking-tight text-white sm:text-xl">
               TECHNOVA
             </span>
-            <span className="block text-xs font-medium tracking-[0.2em] text-blue-800">
+            <span className="block text-xs font-medium tracking-[0.2em] text-blue-300">
               COMPUTERS
             </span>
           </div>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-6 lg:flex">
+        <nav className="hidden items-center gap-8 lg:flex">
           {navigationLinks.map((link) => (
             <Link
               key={link.name}
               href={link.href}
-              className="text-sm font-semibold text-slate-700 transition-colors hover:text-blue-800"
+              className="text-sm font-semibold text-white transition-colors hover:text-blue-300"
             >
               {link.name}
             </Link>
@@ -55,7 +55,7 @@ export default function Navbar() {
           <form
             action="/products"
             method="GET"
-            className="flex w-full items-center rounded-lg border border-slate-200 bg-slate-50 px-3"
+            className="flex w-full items-center rounded-lg border border-white/10 bg-white/5 px-3"
           >
             <svg
               aria-hidden="true"
@@ -74,7 +74,7 @@ export default function Navbar() {
               name="search"
               placeholder="Search products..."
               aria-label="Search products"
-              className="w-full bg-transparent px-3 py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400"
+                className="w-full bg-transparent px-3 py-2.5 text-sm text-white outline-none placeholder:text-slate-400"
             />
           </form>
         </div>
@@ -83,14 +83,14 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           <Link
             href="/login"
-            className="hidden text-sm font-semibold text-slate-700 transition-colors hover:text-blue-800 sm:inline-flex"
+            className="hidden text-sm font-semibold text-white transition-colors hover:text-blue-300 sm:inline-flex"
           >
             Login
           </Link>
 
           <Link
             href="/register"
-              className="hidden rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-blue-900 transition-colors hover:border-blue-900 hover:bg-blue-50 md:inline-flex"
+              className="hidden rounded-lg border border-white/20 bg-white px-4 py-2.5 text-sm font-semibold text-blue-950 transition-colors hover:border-blue-300 hover:bg-blue-50 md:inline-flex"
           >
             Register
           </Link>
@@ -98,7 +98,7 @@ export default function Navbar() {
           <Link
             href="/cart"
             aria-label="Shopping cart"
-            className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-800 transition-colors hover:bg-slate-100"
+            className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 bg-white text-blue-950 transition-colors hover:border-blue-300 hover:bg-blue-50"
           >
             <svg
               aria-hidden="true"
@@ -121,7 +121,7 @@ export default function Navbar() {
             aria-expanded={menuOpen}
             aria-controls="mobile-navigation"
             onClick={() => setMenuOpen((open) => !open)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-900 transition-colors hover:bg-slate-100 lg:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 text-white transition-colors hover:bg-white/10 lg:hidden"
           >
             {menuOpen ? (
               <svg
@@ -154,7 +154,7 @@ export default function Navbar() {
       {menuOpen && (
         <nav
           id="mobile-navigation"
-          className="border-t border-slate-200 bg-white px-4 py-4 shadow-lg lg:hidden sm:px-6"
+          className="border-t border-white/10 bg-slate-950/95 px-4 py-4 shadow-lg backdrop-blur-md lg:hidden sm:px-6"
         >
           <div className="mx-auto flex max-w-7xl flex-col gap-1">
             {navigationLinks.map((link) => (
@@ -162,7 +162,7 @@ export default function Navbar() {
                 key={link.name}
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
-                className="rounded-lg px-4 py-3 font-medium text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-900"
+                className="rounded-lg px-4 py-3 font-medium text-white transition-colors hover:bg-blue-500/10 hover:text-blue-200"
               >
                 {link.name}
               </Link>
@@ -172,20 +172,20 @@ export default function Navbar() {
             <form
               action="/products"
               method="GET"
-              className="mt-2 flex items-center rounded-lg border border-slate-200 bg-slate-50 px-3"
+              className="mt-2 flex items-center rounded-lg border border-white/10 bg-white/5 px-3"
             >
               <input
                 type="search"
                 name="search"
                 placeholder="Search products..."
                 aria-label="Search products"
-                className="w-full bg-transparent px-2 py-3 text-sm text-slate-900 outline-none"
+                className="w-full bg-transparent px-2 py-3 text-sm text-white outline-none"
               />
 
               <button
                 type="submit"
                 aria-label="Search"
-                className="text-blue-900"
+                className="text-white"
               >
                 <svg
                   aria-hidden="true"
@@ -205,7 +205,7 @@ export default function Navbar() {
               <Link
                 href="/login"
                 onClick={() => setMenuOpen(false)}
-                className="rounded-lg border border-blue-900 px-4 py-3 text-center font-semibold text-blue-900 transition-colors hover:bg-blue-50"
+                className="rounded-lg border border-blue-400/40 px-4 py-3 text-center font-semibold text-white transition-colors hover:bg-blue-500/10"
               >
                 Login
               </Link>
@@ -213,7 +213,7 @@ export default function Navbar() {
               <Link
                 href="/register"
                 onClick={() => setMenuOpen(false)}
-                className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-center font-semibold text-blue-900 transition-colors hover:border-blue-900 hover:bg-blue-50"
+                className="rounded-lg border border-white/20 bg-white px-4 py-3 text-center font-semibold text-blue-950 transition-colors hover:border-blue-300 hover:bg-blue-50"
               >
                 Register
               </Link>

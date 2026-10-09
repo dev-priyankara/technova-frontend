@@ -22,9 +22,9 @@ export default function ProductCard({
   onAddToCart,
 }: ProductCardProps) {
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl">
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/5 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400/50 hover:shadow-xl hover:shadow-blue-950/40">
       {/* Product image */}
-      <div className="relative flex h-52 items-center justify-center overflow-hidden bg-slate-50 p-5">
+      <div className="relative flex h-52 items-center justify-center overflow-hidden bg-white/5 p-5">
         {product.badge && (
           <span className="absolute left-3 top-3 z-10 rounded-full bg-blue-900 px-3 py-1 text-xs font-semibold text-white">
             {product.badge}
@@ -44,27 +44,27 @@ export default function ProductCard({
 
       {/* Product details */}
       <div className="flex flex-1 flex-col p-4">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-blue-800">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-blue-300">
           {product.category}
         </p>
 
-        <h3 className="mb-3 line-clamp-2 min-h-12 text-base font-bold text-slate-900">
+        <h3 className="mb-3 line-clamp-2 min-h-12 text-base font-bold text-white">
           {product.name}
         </h3>
 
         <div className="mb-4 mt-auto">
-          <p className="text-xl font-extrabold text-slate-950">
+          <p className="text-xl font-extrabold text-white">
             Rs. {product.price.toLocaleString("en-LK")}
           </p>
 
           <p
             className={`mt-2 flex items-center gap-2 text-sm font-medium ${
-              product.inStock ? "text-green-700" : "text-red-600"
+              product.inStock ? "text-green-400" : "text-red-400"
             }`}
           >
             <span
               className={`h-2 w-2 rounded-full ${
-                product.inStock ? "bg-green-600" : "bg-red-500"
+                product.inStock ? "bg-green-400" : "bg-red-500"
               }`}
             />
             {product.inStock ? "In Stock" : "Out of Stock"}
@@ -75,7 +75,7 @@ export default function ProductCard({
           type="button"
           disabled={!product.inStock}
           onClick={() => onAddToCart?.(product)}
-          className="w-full rounded-xl bg-blue-950 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+          className="w-full rounded-xl bg-blue-950 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white"
         >
           {product.inStock ? "Add to Cart" : "Out of Stock"}
         </button>

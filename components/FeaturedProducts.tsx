@@ -85,21 +85,21 @@ export default function FeaturedProducts() {
   return (
     <section
       id="featured-products"
-      className="bg-white px-4 py-16 sm:px-6 lg:px-8 lg:py-20"
+      className="px-4 py-24 sm:px-6 lg:px-8 lg:py-32"
     >
       <div className="mx-auto max-w-7xl">
         {/* Section heading */}
         <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="mb-2 text-sm font-bold uppercase tracking-[0.2em] text-blue-800">
+            <p className="mb-2 text-sm font-bold uppercase tracking-[0.2em] text-blue-300">
               TECHNOVA COLLECTION
             </p>
 
-            <h2 className="text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">
+            <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
               Featured Products
             </h2>
 
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base">
               Discover computer components, gaming gear and essential
               accessories for your next upgrade.
             </p>
@@ -107,7 +107,7 @@ export default function FeaturedProducts() {
 
           <a
             href="/products"
-            className="inline-flex w-fit items-center gap-2 font-semibold text-blue-900 transition-colors hover:text-blue-600"
+            className="inline-flex w-fit items-center gap-2 font-semibold text-blue-300 transition-colors hover:text-blue-200"
           >
             View All Products
             <span aria-hidden="true">→</span>
@@ -115,7 +115,7 @@ export default function FeaturedProducts() {
         </div>
 
         {/* Demo notice */}
-        <div className="mb-6 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+        <div className="mb-6 rounded-xl border border-blue-400/20 bg-blue-500/10 px-4 py-3 text-sm text-blue-200">
           Demo product data — connect the backend API to display real products
           and current stock information.
         </div>
@@ -124,7 +124,7 @@ export default function FeaturedProducts() {
         {message && (
           <div
             role="status"
-            className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
+            className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200"
           >
             <span>{message}</span>
 
@@ -132,7 +132,7 @@ export default function FeaturedProducts() {
               type="button"
               onClick={() => setMessage("")}
               aria-label="Dismiss message"
-              className="font-semibold text-slate-600 hover:text-slate-950"
+              className="font-semibold text-slate-400 hover:text-white"
             >
               ✕
             </button>
@@ -154,7 +154,7 @@ export default function FeaturedProducts() {
         <div className="mt-10 text-center">
           <a
             href="/products"
-            className="inline-flex items-center justify-center rounded-xl border border-blue-950 px-7 py-3 font-semibold text-blue-950 transition-colors hover:bg-blue-950 hover:text-white"
+            className="inline-flex items-center justify-center rounded-xl border border-blue-400/40 bg-blue-500/10 px-7 py-3 font-semibold text-white transition-colors hover:bg-blue-400 hover:text-blue-950"
           >
             Explore All Products
           </a>
