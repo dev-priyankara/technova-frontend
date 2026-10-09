@@ -3,7 +3,7 @@ export default function PromoBanner() {
   return (
     <section
       aria-labelledby="promo-heading"
-      className="overflow-hidden px-4 py-20 sm:px-6 lg:px-8 lg:py-28"
+      className="overflow-hidden px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-16"
     >
       <div className="relative mx-auto max-w-7xl overflow-hidden rounded-3xl bg-blue-950">
         {/* Decorative background elements */}
@@ -61,10 +61,10 @@ export default function PromoBanner() {
 
             <a
               href="/products"
-              className="mt-8 inline-flex items-center justify-center gap-3 rounded-xl bg-white px-7 py-3.5 font-bold text-blue-950 shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-950"
+              className="mt-8 inline-flex items-center justify-center gap-3 rounded-xl bg-white px-7 py-3.5 font-bold !text-black shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-950"
             >
               Shop Now
-              <span aria-hidden="true" className="text-lg">
+              <span aria-hidden="true" className="text-lg !text-black">
                 →
               </span>
             </a>

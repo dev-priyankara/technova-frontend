@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function Hero() {
   return (
     <section className="overflow-hidden">
-      <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-24 sm:px-6 sm:py-28 lg:grid-cols-2 lg:gap-12 lg:px-8 lg:py-36">
+      <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 pt-6 pb-12 sm:px-6 sm:pt-8 sm:pb-14 lg:grid-cols-2 lg:gap-12 lg:px-8 lg:pt-10 lg:pb-16">
         {/* Hero Content */}
         <div className="relative z-10">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-500/10 px-4 py-2 text-sm font-semibold text-blue-200">
@@ -28,7 +28,7 @@ export default function Hero() {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
               href="/products"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/20 bg-white px-7 py-3.5 font-semibold text-blue-950 shadow-lg shadow-blue-950/30 transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/20 bg-white px-7 py-3.5 font-semibold !text-black shadow-lg shadow-blue-950/30 transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50"
             >
               Shop Now
               <svg
@@ -37,7 +37,7 @@ export default function Hero() {
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
-                className="h-5 w-5"
+                className="h-5 w-5 !text-black"
               >
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
@@ -180,7 +180,7 @@ export default function Hero() {
                 <Link
                   href="/products"
                   aria-label="Explore computer products"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-blue-950 transition-transform hover:scale-105"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white !text-black transition-transform hover:scale-105"
                 >
                   <svg
                     aria-hidden="true"
@@ -188,7 +188,7 @@ export default function Hero() {
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"
-                    className="h-5 w-5"
+                    className="h-5 w-5 !text-black"
                   >
                     <path d="M5 12h14M12 5l7 7-7 7" />
                   </svg>

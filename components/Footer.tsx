@@ -51,7 +51,7 @@ function ClockIcon() {
 export default function Footer() {
   return (
     <footer className="w-full bg-slate-950/85 text-white">
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-14 lg:px-8 lg:py-16">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-8">
           {/* Address */}
           <div className="flex items-start gap-3">
