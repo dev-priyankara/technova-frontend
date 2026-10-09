@@ -1,5 +1,7 @@
-import Navbar from "@/components/layout/Navbar";
+import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
+import CategorySection from "@/components/CategorySection";
+import FeaturedProducts from "@/components/FeaturedProducts";
 
 export default function HomePage() {
   return (
@@ -7,7 +9,8 @@ export default function HomePage() {
       <Navbar />
       <main>
         <HeroSection />
-
+        <CategorySection/>
+        <FeaturedProducts/>
         {/* Add Featured Products and other sections here later */}
       </main>
     </>
