@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { clearSession, getSession, type Customer } from "@/lib/auth";
+import { useCart } from "@/context/CartContext";
 
 const navigationLinks = [
   { name: "Home", href: "/" },
@@ -15,6 +16,7 @@ const navigationLinks = [
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const { openCart, totalItems } = useCart();
 
   useEffect(() => {
     setCustomer(getSession());
@@ -123,9 +125,10 @@ export default function Navbar() {
             </>
           )}
 
-          <Link
-            href="/cart"
-            aria-label="Shopping cart"
+          <button
+            type="button"
+            onClick={openCart}
+            aria-label={`Shopping cart containing ${totalItems} items`}
             className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 bg-white !text-black transition-colors hover:border-blue-300 hover:bg-blue-50"
           >
             <svg
@@ -140,7 +143,13 @@ export default function Navbar() {
               <circle cx="10" cy="20" r="1" />
               <circle cx="18" cy="20" r="1" />
             </svg>
-          </Link>
+
+            {totalItems > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[11px] font-black text-white shadow-md ring-2 ring-slate-950 animate-pulse">
+                {totalItems > 99 ? "99+" : totalItems}
+              </span>
+            )}
+          </button>
 
           {/* Mobile / Tablet Hamburger */}
           <button

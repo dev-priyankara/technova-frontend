@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import ProductCard, { type Product } from "@/components/ProductCard";
+import { useCart } from "@/context/CartContext";
 
 export const allDemoProducts: Product[] = [
   // --- LAPTOPS ---
@@ -370,6 +371,7 @@ export default function FeaturedProducts({
   selectedCategory = "All",
   onSelectCategory,
 }: FeaturedProductsProps) {
+  const { addToCart, openCheckout } = useCart();
   const [showAllProducts, setShowAllProducts] = useState(false);
   const [activeModalProduct, setActiveModalProduct] = useState<Product | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -409,6 +411,7 @@ export default function FeaturedProducts({
       : filteredProducts.slice(0, 8);
 
   function handleAddToCart(product: Product, qty: number = 1) {
+    addToCart(product, qty, true);
     setToastMessage(`✓ Added ${qty}x "${product.name}" to cart!`);
     setTimeout(() => {
       setToastMessage(null);
@@ -744,13 +747,13 @@ export default function FeaturedProducts({
                 type="button"
                 disabled={!activeModalProduct.inStock}
                 onClick={() => {
-                  handleAddToCart(activeModalProduct, quantity);
+                  addToCart(activeModalProduct, quantity, false);
                   setActiveModalProduct(null);
-                  window.location.href = "/cart";
+                  openCheckout();
                 }}
                 className="rounded-xl border border-blue-400/50 bg-blue-600 px-6 py-3 text-sm font-bold text-white hover:bg-blue-500 active:scale-95 disabled:opacity-50"
               >
-                Buy Now →
+                Buy Now (PayHere) →
               </button>
             </div>
           </div>

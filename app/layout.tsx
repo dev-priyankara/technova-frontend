@@ -1,7 +1,7 @@
-
 import type { Metadata } from "next";
 import "./globals.css";
 import AnimatedTechBackground from "@/components/AnimatedTechBackground";
+import Providers from "@/components/Providers";
 
 export const metadata: Metadata = {
   title: "TECHNOVA Computers",
@@ -20,7 +20,7 @@ export default function RootLayout({
         <AnimatedTechBackground />
 
         <div className="relative z-10 min-h-screen">
-          {children}
+          <Providers>{children}</Providers>
         </div>
       </body>
     </html>
