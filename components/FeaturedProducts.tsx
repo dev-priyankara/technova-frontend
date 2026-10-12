@@ -425,7 +425,7 @@ export default function FeaturedProducts({
 
   return (
     <section
-      id="featured-products"
+      id="products"
       aria-labelledby="featured-heading"
       className="relative px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-16"
     >

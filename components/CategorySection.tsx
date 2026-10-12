@@ -155,7 +155,7 @@ export default function CategorySection({
     }
 
     // Smooth scroll down to Featured Products
-    const element = document.getElementById("featured-products");
+    const element = document.getElementById("products") || document.getElementById("featured-products");
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -163,7 +163,7 @@ export default function CategorySection({
 
   return (
     <section
-      id="category-section"
+      id="categories"
       aria-labelledby="categories-heading"
       className="relative bg-slate-950/40 py-10 sm:py-14 lg:py-16"
     >

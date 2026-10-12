@@ -33,6 +33,7 @@ const benefits = [
 export default function WhyChooseUs() {
   return (
     <section
+      id="about"
       aria-labelledby="why-choose-heading"
       className="relative overflow-hidden px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20"
     >
@@ -115,7 +116,7 @@ export default function WhyChooseUs() {
             </div>
 
             <a
-              href="/products"
+              href="/#products"
               className="inline-flex shrink-0 items-center justify-center gap-3 rounded-xl bg-white px-6 py-3.5 font-bold !text-black transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-950"
             >
               Explore Products

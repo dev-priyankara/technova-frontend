@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Hero() {
   return (
-    <section className="overflow-hidden">
+    <section id="home" className="overflow-hidden">
       <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 pt-6 pb-12 sm:px-6 sm:pt-8 sm:pb-14 lg:grid-cols-2 lg:gap-12 lg:px-8 lg:pt-10 lg:pb-16">
         {/* Hero Content */}
         <div className="relative z-10">
@@ -27,7 +27,7 @@ export default function Hero() {
           {/* Hero Buttons */}
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
-              href="/products"
+              href="/#products"
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/20 bg-white px-7 py-3.5 font-semibold !text-black shadow-lg shadow-blue-950/30 transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50"
             >
               Shop Now
@@ -44,7 +44,7 @@ export default function Hero() {
             </Link>
 
             <Link
-              href="/categories"
+              href="/#categories"
               className="inline-flex items-center justify-center rounded-lg border border-white/20 bg-white/10 px-7 py-3.5 font-semibold text-white transition-colors hover:border-blue-300 hover:bg-white/20"
             >
               Explore Categories
@@ -178,7 +178,7 @@ export default function Hero() {
                 </div>
 
                 <Link
-                  href="/products"
+                  href="/#products"
                   aria-label="Explore computer products"
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white !text-black transition-transform hover:scale-105"
                 >

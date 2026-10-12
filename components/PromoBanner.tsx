@@ -60,7 +60,7 @@ export default function PromoBanner() {
             </div>
 
             <a
-              href="/products"
+              href="/#products"
               className="mt-8 inline-flex items-center justify-center gap-3 rounded-xl bg-white px-7 py-3.5 font-bold !text-black shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-950"
             >
               Shop Now

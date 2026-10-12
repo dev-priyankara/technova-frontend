@@ -6,11 +6,11 @@ import { clearSession, getSession, type Customer } from "@/lib/auth";
 import { useCart } from "@/context/CartContext";
 
 const navigationLinks = [
-  { name: "Home", href: "/" },
-  { name: "Products", href: "/products" },
-  { name: "Categories", href: "/categories" },
-  { name: "About Us", href: "/about" },
-  { name: "Contact Us", href: "/contact" },
+  { name: "Home", href: "/#home" },
+  { name: "Products", href: "/#products" },
+  { name: "Categories", href: "/#categories" },
+  { name: "About Us", href: "/#about" },
+  { name: "Contact Us", href: "/#contact" },
 ];
 
 export default function Navbar() {
@@ -25,6 +25,21 @@ export default function Navbar() {
   function handleLogout() {
     clearSession();
     setCustomer(null);
+  }
+
+  function handleNavClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
+    if (href.startsWith("/#") && window.location.pathname === "/") {
+      e.preventDefault();
+      const id = href.replace("/#", "");
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+        setMenuOpen(false);
+        window.history.pushState(null, "", href);
+      }
+    } else {
+      setMenuOpen(false);
+    }
   }
 
   return (
@@ -56,6 +71,7 @@ export default function Navbar() {
             <Link
               key={link.name}
               href={link.href}
+              onClick={(e) => handleNavClick(e, link.href)}
               className="text-sm font-semibold text-white transition-colors hover:text-blue-300"
             >
               {link.name}
@@ -96,9 +112,18 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           {customer ? (
             <>
-              <span className="hidden max-w-[140px] truncate text-sm font-semibold text-white sm:inline-flex">
-                Hi, {customer.name.split(" ")[0]}
-              </span>
+              <Link
+                href="/customer"
+                className="hidden items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3.5 py-2 text-sm font-semibold text-white transition-all hover:border-blue-400 hover:bg-white/20 sm:inline-flex"
+                title="Customer Dashboard"
+              >
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white shadow-sm">
+                  {customer.name.charAt(0).toUpperCase()}
+                </span>
+                <span className="max-w-[130px] truncate">
+                  Hi, {customer.name.split(" ")[0]}
+                </span>
+              </Link>
               <button
                 type="button"
                 onClick={handleLogout}
@@ -198,7 +223,7 @@ export default function Navbar() {
               <Link
                 key={link.name}
                 href={link.href}
-                onClick={() => setMenuOpen(false)}
+                onClick={(e) => handleNavClick(e, link.href)}
                 className="rounded-lg px-4 py-3 font-medium text-white transition-colors hover:bg-blue-500/10 hover:text-blue-200"
               >
                 {link.name}
@@ -239,17 +264,24 @@ export default function Navbar() {
             </form>
 
             {customer ? (
-              <div className="mt-3">
-                <p className="px-4 py-2 text-sm font-semibold text-white">
-                  Signed in as {customer.name}
-                </p>
+              <div className="mt-3 space-y-2">
+                <Link
+                  href="/customer"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-3 rounded-lg border border-white/20 bg-white/10 px-4 py-3 font-semibold text-white transition-colors hover:border-blue-400 hover:bg-white/20"
+                >
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
+                    {customer.name.charAt(0).toUpperCase()}
+                  </span>
+                  <span>My Account ({customer.name})</span>
+                </Link>
                 <button
                   type="button"
                   onClick={() => {
                     handleLogout();
                     setMenuOpen(false);
                   }}
-                  className="mt-2 w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-center font-semibold text-white transition-colors hover:border-blue-300 hover:bg-white/20"
+                  className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-center font-semibold text-rose-300 transition-colors hover:bg-rose-500/10"
                 >
                   Logout
                 </button>

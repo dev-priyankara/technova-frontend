@@ -44,7 +44,7 @@ export default function RegisterPage() {
     try {
       const customer = registerCustomer({ name, email, phone, password });
       setSession(customer);
-      router.push("/dashboard");
+      router.push("/");
     } catch (err) {
       setError(
         err instanceof Error
