@@ -1,13 +1,17 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import Link from "next/link";
 import {
   mockWalkInCustomers,
   type WalkInCustomer,
 } from "@/lib/cashierData";
+import { type CashierSection } from "./sidebar";
 
-export default function CashierCustomersPage() {
+interface CashierCustomersProps {
+  onNavigate?: (section: CashierSection) => void;
+}
+
+export default function CashierCustomers({ onNavigate }: CashierCustomersProps) {
   const [customers, setCustomers] = useState<WalkInCustomer[]>(mockWalkInCustomers);
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -138,12 +142,12 @@ export default function CashierCustomersPage() {
                     {cust.lastPurchaseDate}
                   </td>
                   <td className="py-3 px-3 text-center">
-                    <Link
-                      href="/cashier/pos"
+                    <button
+                      onClick={() => onNavigate?.("pos")}
                       className="inline-flex items-center gap-1 rounded-xl bg-blue-600/30 border border-blue-500/30 px-3 py-1.5 text-xs font-bold text-blue-300 hover:bg-blue-600 hover:text-white transition"
                     >
                       Bill Customer
-                    </Link>
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -180,7 +184,7 @@ export default function CashierCustomersPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Ruwan Jayakody"
+                  placeholder="e.g. Kasun Bandara"
                   className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white focus:border-blue-400 outline-none"
                 />
               </div>
@@ -194,7 +198,7 @@ export default function CashierCustomersPage() {
                   required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="e.g. 077 555 4321"
+                  placeholder="e.g. 077 123 4567"
                   className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white focus:border-blue-400 outline-none"
                 />
               </div>
@@ -247,4 +251,3 @@ export default function CashierCustomersPage() {
     </div>
   );
 }
-

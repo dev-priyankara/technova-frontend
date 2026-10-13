@@ -1,14 +1,18 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import Link from "next/link";
 import {
   mockPOSProducts,
   mockPOSCategories,
   type POSProduct,
 } from "@/lib/cashierData";
+import { type CashierSection } from "./sidebar";
 
-export default function CashierProductsPage() {
+interface CashierProductsProps {
+  onNavigate?: (section: CashierSection) => void;
+}
+
+export default function CashierProducts({ onNavigate }: CashierProductsProps) {
   const [products] = useState<POSProduct[]>(mockPOSProducts);
   const [categories] = useState<string[]>(mockPOSCategories);
   const [selectedCategory, setSelectedCategory] = useState("All Items");
@@ -42,15 +46,17 @@ export default function CashierProductsPage() {
           </p>
         </div>
 
-        <Link
-          href="/cashier/pos"
-          className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-xs font-bold text-white hover:bg-blue-500 transition shadow-lg shadow-blue-600/30 shrink-0"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-          <span>Open POS Register</span>
-        </Link>
+        {onNavigate && (
+          <button
+            onClick={() => onNavigate("pos")}
+            className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-xs font-bold text-white hover:bg-blue-500 transition shadow-lg shadow-blue-600/30 shrink-0"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span>Open POS Register</span>
+          </button>
+        )}
       </div>
 
       {/* Search and Category Filter */}
@@ -155,12 +161,12 @@ export default function CashierProductsPage() {
                       </span>
                     </td>
                     <td className="py-3 px-3 text-center">
-                      <Link
-                        href="/cashier/pos"
+                      <button
+                        onClick={() => onNavigate?.("pos")}
                         className="inline-flex items-center gap-1 rounded-xl bg-blue-600/30 border border-blue-500/30 px-3 py-1.5 text-[11px] font-bold text-blue-300 hover:bg-blue-600 hover:text-white transition"
                       >
                         Bill at POS
-                      </Link>
+                      </button>
                     </td>
                   </tr>
                 );
@@ -178,4 +184,3 @@ export default function CashierProductsPage() {
     </div>
   );
 }
-
