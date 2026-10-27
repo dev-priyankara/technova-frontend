@@ -1,0 +1,264 @@
+﻿Diagnose log at 2026-10-27T06:32:10Z
+
+AppPath: C:\Program Files\Git\mingw64\bin\git-credential-manager.exe
+InstallDir: C:\Program Files\Git\mingw64\bin\
+Version: 2.6.1+786ab03440ddc82e807a97c0e540f5247e44cec6
+
+------------
+Diagnostic: Environment
+Skipped: False
+Success: True
+Exception: None
+Log:
+OSType: Windows
+OSVersion: 10.0 (build 26200)
+Reading environment variables... OK
+ Variables:
+ANTIGRAVITY_APP_DATA_DIR=C:/Users/SE Priyankara/.gemini/antigravity
+PUBLIC=C:\Users\Public
+ALLUSERSPROFILE=C:\ProgramData
+LOGONSERVER=\\CERYTIXSOFT
+LOCALAPPDATA=C:\Users\SE Priyankara\AppData\Local
+ANTIGRAVITY_AUTH_SUCCESS_APP=vscode
+ANTIGRAVITY_PROJECT_ID=ebbde602-b6c1-4772-98a0-a52b16a6c1df
+PYTHONPATH=C:\Users\SE Priyankara\.gemini\sandbox\python
+TMPDIR=C:\Users\SEPRIY~1\AppData\Local\Temp
+ANTIGRAVITY_LS_ADDRESS=localhost:1772
+ELECTRON_NO_ATTACH_CONSOLE=1
+EFC_9156_1262719628=1
+ProgramW6432=C:\Program Files
+ANTIGRAVITY_AGENT=1
+GIT_EXEC_PATH=C:/Program Files/Git/mingw64/libexec/git-core
+_TEMP=C:\Users\SEPRIY~1\AppData\Local\Temp
+SystemDrive=C:
+MSYSTEM=MINGW64
+VSCODE_CLI=1
+OS=Windows_NT
+PROCESSOR_ARCHITECTURE=x86
+ANTIGRAVITY_LS_VERSION=cli-2.26.0
+PATHEXT=.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL
+VSCODE_L10N_BUNDLE_LOCATION=
+VSCODE_CWD=D:\Degree_FinalProject\frontend
+VSCODE_PID=17932
+DEBUG=release
+CommonProgramW6432=C:\Program Files\Common Files
+ProgramFiles(x86)=C:\Program Files (x86)
+_LOCALAPPDATA=C:\Users\SE Priyankara\AppData\Local
+USERNAME=SE Priyankara
+EFC_9156_4126798990=1
+AGY_ENABLE_HUB=1
+CommonProgramFiles=C:\Program Files (x86)\Common Files
+GIT_EDITOR=false
+VSCODE_IPC_HOOK=\\.\pipe\a1a1761f-1.143.1-main-sock
+TERM=xterm-256color
+PROMPT=$P$G
+ProgramFiles=C:\Program Files (x86)
+PATH=C:/Program Files/Git/mingw64/libexec/git-core;C:\Program Files\Git\mingw64\bin;C:\Program Files\Git\usr\bin;C:\Users\SE Priyankara\bin;C:/Users/SE Priyankara/.gemini/antigravity/bin;C:\Program Files\Common Files\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn\;C:\Program Files (x86)\Microsoft SQL Server\160\Tools\Binn\;C:\Program Files\Microsoft SQL Server\160\Tools\Binn\;C:\Program Files\Microsoft SQL Server\160\DTS\Binn\;C:\Program Files (x86)\Microsoft SQL Server\160\DTS\Binn\;C:\Program Files\Git\cmd;C:\xampp\php;C:\ProgramData\ComposerSetup\bin;C:\Program Files\Microsoft SQL Server\170\Tools\Binn\;C:\Program Files\nodejs\;C:\ProgramData\chocolatey\bin;C:\flutter\bin;C:\Program Files (x86)\Microsoft SQL Server\170\Tools\Binn\;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\180\Tools\Binn\;C:\Program Files\Microsoft SQL Server\170\DTS\Binn\;C:\Users\SE Priyankara\AppData\Local\Programs\Microsoft VS Code\bin;C:\Program Files\dotnet\;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\;C:\Users\SE Priyankara\AppData\Local\Programs\Python\Python313\Scripts\;C:\Users\SE Priyankara\AppData\Local\Programs\Python\Python313\;c:\Users\SE Priyankara\AppData\Roaming\Code\User\globalStorage\github.copilot-chat\debugCommand;c:\Users\SE Priyankara\AppData\Roaming\Code\User\globalStorage\github.copilot-chat\copilotCli;C:\Users\SE Priyankara\.codegpt\bin;C:\Users\SE Priyankara\AppData\Roaming\Code\User\globalStorage\pleiades.java-extension-pack-jdk\gradle\latest\bin;C:\Users\SE Priyankara\AppData\Roaming\Code\User\globalStorage\pleiades.java-extension-pack-jdk\maven\latest\bin;C:\Users\SE Priyankara\AppData\Roaming\Code\User\globalStorage\pleiades.java-extension-pack-jdk\java\25\bin;C:\Program Files\Common Files\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn\;C:\Program Files (x86)\Microsoft SQL Server\160\Tools\Binn\;C:\Program Files\Microsoft SQL Server\160\Tools\Binn\;C:\Program Files\Microsoft SQL Server\160\DTS\Binn\;C:\Program Files (x86)\Microsoft SQL Server\160;C:\Users\SE Priyankara\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\SE Priyankara\AppData\Local\Programs\cursor\resources\app\bin;C:\Users\SE Priyankara\AppData\Local\Programs\Kiro\bin;C:\Users\SE Priyankara\.dotnet\tools;C:\Users\SE Priyankara\AppData\Local\Programs\Microsoft VS Code\bin\copilot-shim
+OneDrive=C:\Users\SE Priyankara\OneDrive
+_TMP=C:\Users\SEPRIY~1\AppData\Local\Temp
+PSModulePath=WindowsPowerShell\Modules;C:\Program Files\WindowsPowerShell\Modules;C:\WINDOWS\system32\WindowsPowerShell\v1.0\Modules;C:\Program Files (x86)\Microsoft SQL Server\160\Tools\PowerShell\Modules\;C:\Program Files\Microsoft SQL Server\170\Tools\PowerShell\Modules\
+VSCODE_NODE_COMPILE_CACHE_KIND=extension-host
+PROCESSOR_REVISION=5000
+VSCODE_HANDLES_UNCAUGHT_ERRORS=true
+ChocolateyInstall=C:\ProgramData\chocolatey
+EFC_9156_3789132940=1
+JJ_EDITOR=false
+ANTIGRAVITY_TRAJECTORY_ID=9e28a743-c8a8-49ab-941d-6868030e4b2a
+EFC_9156_2775293581=1
+FPS_BROWSER_APP_PROFILE_STRING=Internet Explorer
+COMPUTERNAME=CERYTIXSOFT
+ANTIGRAVITY_AGENTAPI_EXE=C:\Users\SE Priyankara\.gemini\bin\agy.exe
+SystemRoot=C:\WINDOWS
+EFC_9156_1592913036=1
+ComSpec=C:\WINDOWS\system32\cmd.exe
+ChocolateyLastPathUpdate=134115400071743796
+PLINK_PROTOCOL=ssh
+NoDefaultCurrentDirectoryInExePath=1
+ProgramData=C:\ProgramData
+ANTIGRAVITY_CSRF_TOKEN=731208a6-0583-44da-8908-16d408004d54
+HOMEDRIVE=C:
+EFC_9156_2283032206=1
+DriverData=C:\Windows\System32\Drivers\DriverData
+USERDOMAIN=CERYTIXSOFT
+PSExecutionPolicyPreference=Bypass
+USERPROFILE=C:\Users\SE Priyankara
+VSCODE_CRASH_REPORTER_PROCESS_TYPE=extensionHost
+LC_CTYPE=C.UTF-8
+PROCESSOR_IDENTIFIER=AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD
+C:\Users\SE Priyankara\AppData\Local\Programs\Python\Python313\=C:\Users\SE Priyankara\AppData\Local\Programs\Python\Python313\Scripts\
+CommonProgramFiles(x86)=C:\Program Files (x86)\Common Files
+windir=C:\WINDOWS
+FPS_BROWSER_USER_PROFILE_STRING=Default
+PROCESSOR_LEVEL=25
+SESSIONNAME=Console
+TMP=C:\Users\SEPRIY~1\AppData\Local\Temp
+APPLICATION_INSIGHTS_NO_STATSBEAT=true
+ANTIGRAVITY_VSCODE_HOST=1
+APPDATA=C:\Users\SE Priyankara\AppData\Roaming
+NODE_USE_SYSTEM_CA=1
+VSCODE_NODE_COMPILE_CACHE_ROOT=C:\Users\SE Priyankara\AppData\Local\Programs\Microsoft VS Code\e646868227\resources\app\node-compile-cache
+NUMBER_OF_PROCESSORS=12
+CHROME_CRASHPAD_PIPE_NAME=\\.\pipe\crashpad_17932_CZXMFGKWITOWCZDQ
+USERDOMAIN_ROAMINGPROFILE=CERYTIXSOFT
+HGEDITOR=false
+GIT_TRACE2_PARENT_SID=3577b2d5-53f5-4a54-8ee8-0dc3d84a298f
+VSCODE_NLS_CONFIG={"userLocale":"en-us","osLocale":"en-us","resolvedLanguage":"en","defaultMessagesFile":"C:\\Users\\SE Priyankara\\AppData\\Local\\Programs\\Microsoft VS Code\\e646868227\\resources\\app\\out\\nls.messages.json","locale":"en-us","availableLanguages":{}}
+VSCODE_ESM_ENTRYPOINT=vs/workbench/api/node/extensionHostProcess
+HOMEPATH=\Users\SE Priyankara
+ANTIGRAVITY_SOURCE_METADATA={"tool":{"conversationId":"ad6ea8ab-7503-45f4-aef7-a423c65bbc86", "stepIndex":1252, "toolCall":{"id":"call_2736802", "name":"run_command", "argumentsJson":"{\"CommandLine\":\"git credential-manager diagnose\",\"WaitMsBeforeAsync\":5000,\"toolSummary\":\"Diagnose Git Credential Manager\"}"}}}
+COLORTERM=truecolor
+HOME=C:\Users\SE Priyankara
+PROCESSOR_ARCHITEW6432=AMD64
+ELECTRON_RUN_AS_NODE=1
+TEMP=C:\Users\SEPRIY~1\AppData\Local\Temp
+flutter=C:\src\flutter_windows_3.44.0-stable\flutter\bin
+ANTIGRAVITY_CONVERSATION_ID=ad6ea8ab-7503-45f4-aef7-a423c65bbc86
+COPILOT_OTEL_FILE_EXPORTER_PATH=\\.\nul
+VSCODE_CODE_CACHE_PATH=C:\Users\SE Priyankara\AppData\Roaming\Code\CachedData\e646868227c3e3a9e3f24277c8c7220be42c0be7
+
+
+------------
+Diagnostic: File system
+Skipped: False
+Success: True
+Exception: None
+Log:
+Temporary directory is 'C:\Users\SE Priyankara\AppData\Local\Temp\'...
+Checking basic file I/O...
+Writing to temporary file 'C:\Users\SE Priyankara\AppData\Local\Temp\9d6544909c64509454a73060'... OK
+Reading from temporary file 'C:\Users\SE Priyankara\AppData\Local\Temp\9d6544909c64509454a73060'... OK
+Deleting temporary file 'C:\Users\SE Priyankara\AppData\Local\Temp\9d6544909c64509454a73060'... OK
+Testing IFileSystem instance...
+UserHomePath: C:\Users\SE Priyankara
+UserDataDirectoryPath: C:\Users\SE Priyankara\.gcm
+GetCurrentDirectory(): D:\Degree_FinalProject\frontend
+
+------------
+Diagnostic: Networking
+Skipped: False
+Success: False
+Exception:
+System.Net.Http.HttpRequestException: An error occurred while sending the request. ---> System.Net.WebException: The remote name could not be resolved: 'example.com'
+   at System.Net.HttpWebRequest.EndGetResponse(IAsyncResult asyncResult)
+   at System.Net.Http.HttpClientHandler.GetResponseCallback(IAsyncResult ar)
+   --- End of inner exception stack trace ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at GitCredentialManager.Diagnostics.NetworkingDiagnostic.<RunInternalAsync>d__4.MoveNext()
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at GitCredentialManager.Diagnostics.Diagnostic.<RunAsync>d__6.MoveNext()
+Log:
+Checking networking and HTTP stack...
+Creating HTTP client... OK
+IsNetworkAvailable: True
+Sending HEAD request to http://example.com...Sending HEAD request to https://example.com... warning: HEAD request failed
+Sending HEAD request to http://httpforever.com...
+------------
+Diagnostic: Git
+Skipped: False
+Success: True
+Exception: None
+Log:
+Getting Git version... OK
+Git version is '2.51.0.windows.1'
+Locating current repository...Git repository at 'D:/Degree_FinalProject/frontend/.git'
+ OK
+Listing all Git configuration... OK
+Git configuration:
+file:C:/Program Files/Git/etc/gitconfig	diff.astextplain.textconv=astextplain
+file:C:/Program Files/Git/etc/gitconfig	filter.lfs.clean=git-lfs clean -- %f
+file:C:/Program Files/Git/etc/gitconfig	filter.lfs.smudge=git-lfs smudge -- %f
+file:C:/Program Files/Git/etc/gitconfig	filter.lfs.process=git-lfs filter-process
+file:C:/Program Files/Git/etc/gitconfig	filter.lfs.required=true
+file:C:/Program Files/Git/etc/gitconfig	http.sslbackend=schannel
+file:C:/Program Files/Git/etc/gitconfig	core.autocrlf=true
+file:C:/Program Files/Git/etc/gitconfig	core.fscache=true
+file:C:/Program Files/Git/etc/gitconfig	core.symlinks=false
+file:C:/Program Files/Git/etc/gitconfig	pull.rebase=false
+file:C:/Program Files/Git/etc/gitconfig	credential.helper=manager
+file:C:/Program Files/Git/etc/gitconfig	credential.https://dev.azure.com.usehttppath=true
+file:C:/Program Files/Git/etc/gitconfig	init.defaultbranch=master
+file:C:/Users/SE Priyankara/.gitconfig	filter.lfs.clean=git-lfs clean -- %f
+file:C:/Users/SE Priyankara/.gitconfig	filter.lfs.smudge=git-lfs smudge -- %f
+file:C:/Users/SE Priyankara/.gitconfig	filter.lfs.process=git-lfs filter-process
+file:C:/Users/SE Priyankara/.gitconfig	filter.lfs.required=true
+file:C:/Users/SE Priyankara/.gitconfig	user.name=Ramesh2003priyankara
+file:C:/Users/SE Priyankara/.gitconfig	user.email=priyankararamesh722@gmail.com
+file:C:/Users/SE Priyankara/.gitconfig	http.postbuffer=524288000
+file:C:/Users/SE Priyankara/.gitconfig	http.version=HTTP/1.1
+file:C:/Users/SE Priyankara/.gitconfig	core.editor=Visual Studio Code
+file:.git/config	core.repositoryformatversion=0
+file:.git/config	core.filemode=false
+file:.git/config	core.bare=false
+file:.git/config	core.logallrefupdates=true
+file:.git/config	core.symlinks=false
+file:.git/config	core.ignorecase=true
+file:.git/config	remote.origin.url=https://github.com/dev-priyankara/technova-frontend.git
+file:.git/config	remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*
+file:.git/config	branch.main.remote=origin
+file:.git/config	branch.main.merge=refs/heads/main
+file:.git/config	branch.main.vscode-merge-base=origin/main
+
+
+------------
+Diagnostic: Credential storage
+Skipped: False
+Success: False
+Exception:
+GitCredentialManager.Interop.InteropException: Failed to enumerate credentials. ---> System.ComponentModel.Win32Exception: Access is denied
+   --- End of inner exception stack trace ---
+   at GitCredentialManager.Interop.Windows.Native.Win32Error.ThrowIfError(Int32 error, String defaultErrorMessage, ITrace2 trace2)
+   at GitCredentialManager.Interop.Windows.WindowsCredentialManager.<Enumerate>d__8.MoveNext()
+   at System.Linq.Enumerable.FirstOrDefault[TSource](IEnumerable`1 source)
+   at GitCredentialManager.Interop.Windows.WindowsCredentialManager.Remove(String service, String account)
+   at GitCredentialManager.CredentialStore.Remove(String service, String account)
+   at GitCredentialManager.Diagnostics.CredentialStoreDiagnostic.RunInternalAsync(StringBuilder log, IList`1 additionalFiles)
+   at GitCredentialManager.Diagnostics.Diagnostic.<RunAsync>d__6.MoveNext()
+Log:
+ICredentialStore instance is of type: CredentialStore
+Writing test credential...Deleting test credential...
+------------
+Diagnostic: Microsoft authentication (AAD/MSA)
+Skipped: False
+Success: True
+Exception: None
+Log:
+Broker is not enabled.
+Flow type is: Auto
+Gathering MSAL token cache data... OK
+CacheDirectory: C:\Users\SE Priyankara\AppData\Local\Packages\sandbox.{dfa6088e-1505-4031-9ff9-ba9e39d22880}\AC\.IdentityService
+CacheFileName: msal.cache
+CacheFilePath: C:\Users\SE Priyankara\AppData\Local\Packages\sandbox.{dfa6088e-1505-4031-9ff9-ba9e39d22880}\AC\.IdentityService\msal.cache
+Creating cache helper... OK
+Verifying MSAL token cache persistence... OK
+
+------------
+Diagnostic: GitHub API
+Skipped: False
+Success: False
+Exception:
+System.Net.Http.HttpRequestException: An error occurred while sending the request. ---> System.Net.WebException: The remote name could not be resolved: 'api.github.com'
+   at System.Net.HttpWebRequest.EndGetResponse(IAsyncResult asyncResult)
+   at System.Net.Http.HttpClientHandler.GetResponseCallback(IAsyncResult ar)
+   --- End of inner exception stack trace ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at GitHub.GitHubRestApi.<GetMetaInfoAsync>d__5.MoveNext()
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at GitHub.Diagnostics.GitHubApiDiagnostic.<RunInternalAsync>d__2.MoveNext()
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Runtime.CompilerServices.TaskAwaiter.ThrowForNonSuccess(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
+   at System.Runtime.CompilerServices.TaskAwaiter`1.GetResult()
+   at GitCredentialManager.Diagnostics.Diagnostic.<RunAsync>d__6.MoveNext()
+Log:
+Using 'https://github.com/' as API target.
+Querying '/meta' endpoint...
