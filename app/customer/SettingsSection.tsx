@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { getSession } from "@/lib/auth";
+import { getSession, updateCustomerProfile, updateCustomerPassword } from "@/lib/auth";
 
 export default function SettingsSection() {
   const [profileForm, setProfileForm] = useState({
@@ -33,23 +33,36 @@ export default function SettingsSection() {
         name: session.name || prev.name,
         email: session.email || prev.email,
         phone: session.phone || prev.phone,
+        street: session.street || prev.street,
+        city: session.city || prev.city,
+        postalCode: session.postalCode || prev.postalCode,
       }));
     }
   }, []);
 
-  function handleProfileSubmit(e: React.FormEvent) {
+  async function handleProfileSubmit(e: React.FormEvent) {
     e.preventDefault();
     setIsSavingProfile(true);
     setProfileSuccessMsg("");
 
-    setTimeout(() => {
-      setIsSavingProfile(false);
-      setProfileSuccessMsg("Profile details updated successfully!");
+    try {
+      await updateCustomerProfile({
+        name: profileForm.name,
+        phone: profileForm.phone,
+        street: profileForm.street,
+        city: profileForm.city,
+        postal_code: profileForm.postalCode,
+      });
+      setProfileSuccessMsg("Profile details updated successfully in database!");
       setTimeout(() => setProfileSuccessMsg(""), 4000);
-    }, 600);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update profile.");
+    } finally {
+      setIsSavingProfile(false);
+    }
   }
 
-  function handlePasswordSubmit(e: React.FormEvent) {
+  async function handlePasswordSubmit(e: React.FormEvent) {
     e.preventDefault();
     setPasswordErrorMsg("");
     setPasswordSuccessMsg("");
@@ -70,17 +83,23 @@ export default function SettingsSection() {
     }
 
     setIsSavingPassword(true);
-
-    setTimeout(() => {
-      setIsSavingPassword(false);
-      setPasswordSuccessMsg("Password changed successfully!");
+    try {
+      await updateCustomerPassword({
+        current_password: passwordForm.currentPassword,
+        new_password: passwordForm.newPassword,
+      });
+      setPasswordSuccessMsg("Password changed successfully in database!");
       setPasswordForm({
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
       });
       setTimeout(() => setPasswordSuccessMsg(""), 4000);
-    }, 600);
+    } catch (err) {
+      setPasswordErrorMsg(err instanceof Error ? err.message : "Failed to update password.");
+    } finally {
+      setIsSavingPassword(false);
+    }
   }
 
   return (

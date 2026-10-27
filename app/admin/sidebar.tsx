@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { mockAdminStats } from "@/lib/adminData";
+import { getStoredAdminProfile } from "./profile";
 
 export type AdminSection =
   | "dashboard"
@@ -15,7 +16,8 @@ export type AdminSection =
   | "suppliers"
   | "customers"
   | "reports"
-  | "ai";
+  | "ai"
+  | "profile";
 
 interface SidebarProps {
   activeSection: AdminSection;
@@ -32,6 +34,38 @@ export default function AdminSidebar({
   mobileMenuOpen,
   setMobileMenuOpen,
 }: SidebarProps) {
+  const [profileName, setProfileName] = useState("Kasun Silva");
+  const [profileAvatar, setProfileAvatar] = useState("");
+
+  useEffect(() => {
+    function loadProfile() {
+      const stored = getStoredAdminProfile();
+      if (stored) {
+        setProfileName(stored.name || "Kasun Silva");
+        setProfileAvatar(stored.avatarUrl || "");
+      }
+    }
+    loadProfile();
+
+    function handleUpdate(e: any) {
+      if (e.detail) {
+        setProfileName(e.detail.name || "Kasun Silva");
+        setProfileAvatar(e.detail.avatarUrl || "");
+      }
+    }
+    window.addEventListener("admin_profile_updated", handleUpdate);
+    return () => {
+      window.removeEventListener("admin_profile_updated", handleUpdate);
+    };
+  }, []);
+
+  function getInitials(nameStr: string): string {
+    const parts = nameStr.trim().split(" ");
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return (nameStr.slice(0, 2) || "KS").toUpperCase();
+  }
   const navItems: {
     id: AdminSection;
     label: string;
@@ -228,31 +262,45 @@ export default function AdminSidebar({
         </nav>
 
         <div className="p-4 border-t border-white/10 space-y-2">
-          <div className="flex items-center gap-3 rounded-2xl bg-white/[0.03] border border-white/10 p-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-xs font-black text-white">
-              KS
-            </div>
+          <button
+            type="button"
+            onClick={() => onSelectSection("profile")}
+            className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition-all group cursor-pointer ${
+              activeSection === "profile"
+                ? "bg-blue-600/20 border-blue-500/60 shadow-lg shadow-blue-500/10 ring-1 ring-blue-400"
+                : "bg-white/[0.03] border-white/10 hover:bg-white/[0.08] hover:border-blue-400/40"
+            }`}
+            title="Click to view & edit Profile"
+          >
+            {profileAvatar ? (
+              <img
+                src={profileAvatar}
+                alt={profileName}
+                className="h-10 w-10 shrink-0 rounded-xl object-cover border border-blue-400/40 shadow-sm"
+              />
+            ) : (
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-xs font-black text-white shadow-md shadow-blue-600/30">
+                {getInitials(profileName)}
+              </div>
+            )}
             <div className="min-w-0 flex-1">
-              <span className="block truncate text-xs font-bold text-white">
-                Kasun Silva
+              <span className="block truncate text-xs font-bold text-white group-hover:text-blue-300 transition-colors">
+                {profileName}
               </span>
               <span className="block text-[10px] text-emerald-400 font-semibold">
                 ● Super Admin (POS & Ops)
               </span>
             </div>
-          </div>
+            <span className="text-slate-400 group-hover:text-white transition-colors text-xs font-bold">
+              ⚙️
+            </span>
+          </button>
 
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <Link
-              href="/"
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-2.5 py-2 text-[11px] font-bold text-slate-300 hover:bg-white/10 hover:text-white transition-all text-center"
-            >
-              <span>← Store</span>
-            </Link>
+          <div className="pt-1">
             <button
               type="button"
               onClick={onLogout}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 px-2.5 py-2 text-[11px] font-bold text-rose-300 hover:bg-rose-500/20 transition-all text-center"
+              className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 px-2.5 py-2 text-[11px] font-bold text-rose-300 hover:bg-rose-500/20 transition-all text-center cursor-pointer"
             >
               <span>Logout</span>
             </button>
@@ -309,6 +357,39 @@ export default function AdminSidebar({
             </nav>
 
             <div className="pt-4 border-t border-white/10 mt-4 space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  onSelectSection("profile");
+                  setMobileMenuOpen(false);
+                }}
+                className={`flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition-all cursor-pointer ${
+                  activeSection === "profile"
+                    ? "bg-blue-600/20 border-blue-500/60 ring-1 ring-blue-400"
+                    : "bg-white/[0.03] border-white/10 hover:bg-white/[0.08]"
+                }`}
+              >
+                {profileAvatar ? (
+                  <img
+                    src={profileAvatar}
+                    alt={profileName}
+                    className="h-9 w-9 shrink-0 rounded-xl object-cover border border-blue-400/40"
+                  />
+                ) : (
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-xs font-black text-white">
+                    {getInitials(profileName)}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <span className="block truncate text-xs font-bold text-white">
+                    {profileName}
+                  </span>
+                  <span className="block text-[10px] text-emerald-400 font-semibold">
+                    View Profile & Settings →
+                  </span>
+                </div>
+              </button>
+
               <Link
                 href="/"
                 className="block w-full rounded-xl bg-white/5 border border-white/10 py-2.5 text-xs font-bold text-slate-300 text-center"

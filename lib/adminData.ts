@@ -1,4 +1,4 @@
-export type AdminUserRole = "Admin" | "Cashier" | "Supplier";
+export type AdminUserRole = "Admin" | "Cashier" | "Supplier" | "Customer";
 
 export type AdminUser = {
   id: string;
@@ -21,7 +21,39 @@ export type AdminProduct = {
   minStockLevel: number;
   specs: string;
   status: "In Stock" | "Low Stock" | "Out of Stock";
+  createdAt?: string;
 };
+
+export type TimeFilterPeriod = "all" | "today" | "weekly" | "monthly";
+
+export function isDateInPeriod(dateString?: string, period: TimeFilterPeriod = "all"): boolean {
+  if (period === "all") return true;
+  if (!dateString) return false;
+
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return false;
+
+  const now = new Date();
+  const itemDay = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+  if (period === "today") {
+    return itemDay === today;
+  }
+
+  if (period === "weekly") {
+    const diffDays = (today - itemDay) / (1000 * 60 * 60 * 24);
+    return diffDays >= 0 && diffDays <= 7;
+  }
+
+  if (period === "monthly") {
+    const isSameMonth = date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
+    const diffDays = (today - itemDay) / (1000 * 60 * 60 * 24);
+    return isSameMonth || (diffDays >= 0 && diffDays <= 30);
+  }
+
+  return true;
+}
 
 export type AdminCategory = {
   id: string;
@@ -152,6 +184,7 @@ export const mockAdminProducts: AdminProduct[] = [
     minStockLevel: 3,
     specs: "Core i7-13650HX, 16GB DDR5, RTX 4060, 512GB SSD",
     status: "In Stock",
+    createdAt: "2026-10-27",
   },
   {
     id: "prod-102",
@@ -164,6 +197,7 @@ export const mockAdminProducts: AdminProduct[] = [
     minStockLevel: 5,
     specs: "8 Cores, 16 Threads, 104MB Cache, AM5 Socket",
     status: "Low Stock",
+    createdAt: "2026-10-27",
   },
   {
     id: "prod-103",
@@ -176,6 +210,7 @@ export const mockAdminProducts: AdminProduct[] = [
     minStockLevel: 4,
     specs: "12GB GDDR6X, DLSS 3.5, Dual Fan Cooling",
     status: "Low Stock",
+    createdAt: "2026-10-25",
   },
   {
     id: "prod-104",
@@ -188,6 +223,7 @@ export const mockAdminProducts: AdminProduct[] = [
     minStockLevel: 6,
     specs: "32GB Kit, CL30, AMD EXPO & Intel XMP 3.0",
     status: "In Stock",
+    createdAt: "2026-10-23",
   },
   {
     id: "prod-105",
@@ -200,6 +236,7 @@ export const mockAdminProducts: AdminProduct[] = [
     minStockLevel: 4,
     specs: "7,450 MB/s Read, 6,900 MB/s Write",
     status: "Out of Stock",
+    createdAt: "2026-10-14",
   },
   {
     id: "prod-106",
@@ -212,6 +249,7 @@ export const mockAdminProducts: AdminProduct[] = [
     minStockLevel: 3,
     specs: "27-inch IPS, 2560x1440, 165Hz, 1ms, G-Sync Compatible",
     status: "In Stock",
+    createdAt: "2026-10-06",
   },
   {
     id: "prod-107",
@@ -224,6 +262,7 @@ export const mockAdminProducts: AdminProduct[] = [
     minStockLevel: 4,
     specs: "850W, 80 PLUS Gold, ATX 3.0, PCIe 5.0 12VHPWR",
     status: "In Stock",
+    createdAt: "2026-09-18",
   },
 ];
 
@@ -295,26 +334,56 @@ export const mockAdminOrders: AdminOrder[] = [
     id: "ORD-94821",
     customerName: "Kasun Perera",
     customerPhone: "+94 77 123 4567",
-    date: "2026-10-08",
+    date: "2026-10-27",
     totalAmount: 464500,
     status: "Pending",
     paymentStatus: "Paid",
     itemsSummary: "ASUS ROG Strix G16 + Logitech G502 HERO",
   },
   {
+    id: "ORD-94820",
+    customerName: "Dilshan Wickrama",
+    customerPhone: "+94 71 456 7890",
+    date: "2026-10-27",
+    totalAmount: 148000,
+    status: "Processing",
+    paymentStatus: "Paid",
+    itemsSummary: "AMD Ryzen 7 7800X3D Processor",
+  },
+  {
     id: "ORD-89312",
     customerName: "Mahesh Jayawardena",
     customerPhone: "+94 71 889 2233",
-    date: "2026-10-02",
+    date: "2026-10-25",
     totalAmount: 435500,
     status: "Processing",
     paymentStatus: "Paid",
     itemsSummary: "Ryzen 7 7800X3D + RTX 4070 Super + Corsair 32GB",
   },
   {
+    id: "ORD-88150",
+    customerName: "Kamal Senanayake",
+    customerPhone: "+94 77 990 1122",
+    date: "2026-10-22",
+    totalAmount: 245000,
+    status: "Delivered",
+    paymentStatus: "Paid",
+    itemsSummary: "MSI GeForce RTX 4070 Super Ventus 2X",
+  },
+  {
+    id: "ORD-87104",
+    customerName: "Sanduni Gamage",
+    customerPhone: "+94 76 554 1122",
+    date: "2026-10-10",
+    totalAmount: 98000,
+    status: "Delivered",
+    paymentStatus: "Paid",
+    itemsSummary: "ASUS TUF VG27AQ 27\" Monitor",
+  },
+  {
     id: "ORD-76120",
     customerName: "Rashmi Wickramasinghe",
-    customerPhone: "+94 76 554 1122",
+    customerPhone: "+94 76 554 3344",
     date: "2026-09-18",
     totalAmount: 101500,
     status: "Delivered",
@@ -326,10 +395,10 @@ export const mockAdminOrders: AdminOrder[] = [
     customerName: "Thilina Alwis",
     customerPhone: "+94 70 332 9988",
     date: "2026-08-11",
-    totalAmount: 98000,
+    totalAmount: 46000,
     status: "Delivered",
     paymentStatus: "Paid",
-    itemsSummary: "ASUS TUF VG27AQ 27\" Monitor",
+    itemsSummary: "Corsair RM850e 850W ATX 3.0 Gold PSU",
   },
 ];
 

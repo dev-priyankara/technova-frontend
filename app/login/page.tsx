@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
 
@@ -27,7 +27,7 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const customer = loginCustomer(email, password);
+      const customer = await loginCustomer(email, password);
       setSession(customer);
       router.push("/");
     } catch (err) {

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ProductCard, { type Product } from "@/components/ProductCard";
 import { useCart } from "@/context/CartContext";
+import { apiFetch } from "@/lib/auth";
 
 export const allDemoProducts: Product[] = [
   // --- LAPTOPS ---
@@ -372,10 +373,41 @@ export default function FeaturedProducts({
   onSelectCategory,
 }: FeaturedProductsProps) {
   const { addToCart, openCheckout } = useCart();
+  const [products, setProducts] = useState<Product[]>(allDemoProducts);
   const [showAllProducts, setShowAllProducts] = useState(false);
   const [activeModalProduct, setActiveModalProduct] = useState<Product | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
+
+  useEffect(() => {
+    let isMounted = true;
+    apiFetch<any[]>("/products")
+      .then((data) => {
+        if (!isMounted || !Array.isArray(data) || data.length === 0) return;
+        const mapped: Product[] = data.map((p) => ({
+          id: p.id,
+          name: p.name,
+          category: p.category,
+          brand: p.brand || "",
+          price: p.price,
+          originalPrice: p.original_price || undefined,
+          inStock: p.in_stock,
+          stockCount: p.stock_count,
+          badge: p.badge || undefined,
+          rating: p.rating || 4.8,
+          reviews: p.reviews || 0,
+          specs: Array.isArray(p.specs) ? p.specs : [],
+          description: p.description || "",
+          warranty: p.warranty || "Official Warranty",
+        }));
+        setProducts(mapped);
+      })
+      .catch((err) => console.warn("Using default demo products:", err));
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Quick filter tab options
   const filterTabs = [
@@ -393,8 +425,8 @@ export default function FeaturedProducts({
   // Filter products by selectedCategory
   const filteredProducts =
     selectedCategory === "All" || !selectedCategory
-      ? allDemoProducts
-      : allDemoProducts.filter((p) => {
+      ? products
+      : products.filter((p) => {
           const matchKey = selectedCategory.toLowerCase();
           const prodCat = p.category.toLowerCase();
           return prodCat.includes(matchKey) || matchKey.includes(prodCat);

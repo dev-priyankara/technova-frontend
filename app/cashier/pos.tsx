@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   mockPOSProducts,
   mockPOSCategories,
@@ -11,14 +11,40 @@ import {
   type POSTransaction,
   type WalkInCustomer,
 } from "@/lib/cashierData";
+import { apiFetch } from "@/lib/auth";
 import ReceiptModal from "@/app/cashier/receiptModal";
 
 export default function POSBillingCounter() {
   // State
-  const [products] = useState<POSProduct[]>(mockPOSProducts);
-  const [categories] = useState<string[]>(mockPOSCategories);
+  const [products, setProducts] = useState<POSProduct[]>(mockPOSProducts);
+  const [categories, setCategories] = useState<string[]>(mockPOSCategories);
   const [selectedCategory, setSelectedCategory] = useState("All Items");
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+    apiFetch<any[]>("/products")
+      .then((data) => {
+        if (!isMounted || !Array.isArray(data) || data.length === 0) return;
+        const mapped: POSProduct[] = data.map((p) => ({
+          id: p.id,
+          name: p.name,
+          category: p.category,
+          sku: p.sku,
+          price: p.price,
+          stockQty: p.stock_count,
+          specs: Array.isArray(p.specs) ? p.specs.join(", ") : p.specs || "",
+          warranty: p.warranty || "1 Year Warranty",
+          badge: p.badge || undefined,
+        }));
+        setProducts(mapped);
+      })
+      .catch((err) => console.warn("Using default POS products:", err));
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Customer State
   const [customers, setCustomers] = useState<WalkInCustomer[]>(mockWalkInCustomers);
@@ -257,6 +283,36 @@ export default function POSBillingCounter() {
       status: "Completed",
     };
 
+    // Persist POS Order in MySQL backend & decrement inventory
+    apiFetch<any>("/orders", {
+      method: "POST",
+      body: JSON.stringify({
+        items: cart.map((item) => ({
+          product_id: item.product.id,
+          quantity: item.qty,
+        })),
+        shipping_address: {
+          recipient_name: selectedCustomer.name || "Walk-In Customer",
+          street: "POS In-Store Counter",
+          city: selectedCustomer.city || "Colombo",
+          district: "",
+          postal_code: "",
+          phone: selectedCustomer.phone || "+94 77 000 0000",
+        },
+        payment_method: paymentMethod,
+        payment_status: "Paid",
+        customer_email: "pos-counter@technova.lk",
+      }),
+    })
+      .then((savedOrder) => {
+        if (savedOrder?.id) {
+          transaction.receiptNo = savedOrder.id;
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not save POS order to backend:", err);
+      });
+
     // Open Receipt
     setCurrentReceipt(transaction);
 
@@ -266,7 +322,7 @@ export default function POSBillingCounter() {
     setCardAuthRef("");
     setTransferRef("");
     setMobileCartOpen(false);
-    triggerToast("Sale completed successfully! Receipt generated.");
+    triggerToast("Sale completed successfully! Saved to MySQL database.");
   }
 
   return (

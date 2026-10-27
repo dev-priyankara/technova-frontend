@@ -1,6 +1,8 @@
 "use client";
 
-import { getOrderById, calculateOrderTotals } from "@/lib/customerData";
+import { useEffect, useState } from "react";
+import { getOrderById, calculateOrderTotals, type Order } from "@/lib/customerData";
+import { apiFetch } from "@/lib/auth";
 
 interface OrderDetailsSectionProps {
   orderId: string;
@@ -11,7 +13,50 @@ export default function OrderDetailsSection({
   orderId,
   onBackToOrders,
 }: OrderDetailsSectionProps) {
-  const order = getOrderById(orderId);
+  const [order, setOrder] = useState<Order>(() => getOrderById(orderId));
+
+  useEffect(() => {
+    let isMounted = true;
+    apiFetch<any>(`/orders/${orderId}`)
+      .then((o) => {
+        if (!isMounted || !o || !o.id) return;
+        setOrder({
+          id: o.id,
+          date: o.date ? o.date.split("T")[0] : new Date().toISOString().split("T")[0],
+          status: o.status as any,
+          items: (o.items || []).map((it: any) => ({
+            id: it.product_id,
+            name: it.name,
+            category: "Hardware Component",
+            quantity: it.quantity,
+            price: it.price,
+            sku: it.sku,
+          })),
+          shippingAddress: {
+            recipientName: o.shipping_address?.recipient_name || "",
+            street: o.shipping_address?.street || "",
+            city: o.shipping_address?.city || "",
+            district: o.shipping_address?.district || "",
+            postalCode: o.shipping_address?.postal_code || "",
+            phone: o.shipping_address?.phone || "",
+          },
+          paymentMethod: {
+            type: o.payment_method || "PayHere Online Gateway",
+            details: "Direct Payment",
+            status: o.payment_status || "Paid",
+          },
+          trackingNumber: `TN-EXP-${o.id}`,
+          deliveryDate: "Estimated 2-3 Business Days",
+        });
+      })
+      .catch(() => {
+        // Fallback to initial order
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [orderId]);
+
   const totals = calculateOrderTotals(order);
 
   // Status step progression helper

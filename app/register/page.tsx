@@ -4,10 +4,21 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import HomeLink from "@/components/HomeLink";
-import { registerCustomer, setSession } from "@/lib/auth";
+import { setPendingRegistration } from "@/lib/auth";
+import { sendVerificationEmail } from "@/lib/emailjs";
 
 const inputClass =
   "mt-1.5 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-400 focus:border-blue-400/60 focus:bg-white/10";
+
+const VERIFICATION_CODE_LENGTH = 6;
+
+function generateVerificationCode(length = VERIFICATION_CODE_LENGTH): string {
+  const array = new Uint32Array(length);
+  crypto.getRandomValues(array);
+  return Array.from(array, (value) => String.fromCharCode(48 + (value % 10)))
+    .join("")
+    .slice(0, length);
+}
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -19,7 +30,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
 
@@ -42,9 +53,22 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const customer = registerCustomer({ name, email, phone, password });
-      setSession(customer);
-      router.push("/");
+      const verificationCode = generateVerificationCode();
+      setPendingRegistration({
+        name,
+        email: email.trim(),
+        phone,
+        password,
+        verification_code: verificationCode,
+      });
+
+      await sendVerificationEmail({
+        to_email: email.trim(),
+        name,
+        verification_code: verificationCode,
+      });
+
+      router.push("/register/verify");
     } catch (err) {
       setError(
         err instanceof Error

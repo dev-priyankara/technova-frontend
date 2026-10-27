@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
-import { type Customer } from "@/lib/auth";
-import { dummyOrders } from "@/lib/customerData";
+import React, { useEffect, useState } from "react";
+import { type Customer, apiFetch } from "@/lib/auth";
+import { dummyOrders, type Order } from "@/lib/customerData";
 
 interface OverviewSectionProps {
   customer: Customer | null;
@@ -17,20 +17,65 @@ export default function OverviewSection({
   onNavigateToSettings,
   onSelectOrder,
 }: OverviewSectionProps) {
-  const pendingOrdersCount = dummyOrders.filter(
+  const [orders, setOrders] = useState<Order[]>(dummyOrders);
+
+  useEffect(() => {
+    let isMounted = true;
+    apiFetch<any[]>("/orders")
+      .then((data) => {
+        if (!isMounted || !Array.isArray(data) || data.length === 0) return;
+        const mapped: Order[] = data.map((o) => ({
+          id: o.id,
+          date: o.date ? o.date.split("T")[0] : new Date().toISOString().split("T")[0],
+          status: o.status as any,
+          items: (o.items || []).map((it: any) => ({
+            id: it.product_id,
+            name: it.name,
+            category: "Hardware Component",
+            quantity: it.quantity,
+            price: it.price,
+            sku: it.sku,
+          })),
+          shippingAddress: {
+            recipientName: o.shipping_address?.recipient_name || "",
+            street: o.shipping_address?.street || "",
+            city: o.shipping_address?.city || "",
+            district: o.shipping_address?.district || "",
+            postalCode: o.shipping_address?.postal_code || "",
+            phone: o.shipping_address?.phone || "",
+          },
+          paymentMethod: {
+            type: o.payment_method || "PayHere Online Gateway",
+            details: "Direct Payment",
+            status: o.payment_status || "Paid",
+          },
+          trackingNumber: `TN-EXP-${o.id}`,
+          deliveryDate: "Estimated 2-3 Business Days",
+        }));
+        setOrders(mapped);
+      })
+      .catch(() => {
+        // keep defaults
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const pendingOrdersCount = orders.filter(
     (order) => order.status === "Pending" || order.status === "Processing",
   ).length;
 
-  const deliveredOrdersCount = dummyOrders.filter(
+  const deliveredOrdersCount = orders.filter(
     (order) => order.status === "Delivered",
   ).length;
 
-  const totalSpentLKR = dummyOrders.reduce((sum, order) => {
+  const totalSpentLKR = orders.reduce((sum, order) => {
     const orderTotal = order.items.reduce((s, it) => s + it.price * it.quantity, 0);
     return sum + orderTotal;
   }, 0);
 
-  const recentOrders = dummyOrders.slice(0, 3);
+  const recentOrders = orders.slice(0, 3);
 
   return (
     <div className="space-y-4 sm:space-y-6">

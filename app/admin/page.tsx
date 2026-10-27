@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AdminSidebar, { type AdminSection } from "./sidebar";
@@ -15,11 +15,44 @@ import AdminSuppliers from "./suppliers";
 import AdminCustomers from "./customers";
 import AdminReports from "./reports";
 import AdminAIMonitoring from "./aiMonitoring";
+import AdminProfile, { getStoredAdminProfile, type AdminProfileData } from "./profile";
 
 export default function AdminPage() {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [headerName, setHeaderName] = useState("Kasun Silva");
+  const [headerAvatar, setHeaderAvatar] = useState("");
+
+  useEffect(() => {
+    function loadProfile() {
+      const stored = getStoredAdminProfile();
+      if (stored) {
+        setHeaderName(stored.name || "Kasun Silva");
+        setHeaderAvatar(stored.avatarUrl || "");
+      }
+    }
+    loadProfile();
+
+    function handleUpdate(e: any) {
+      if (e.detail) {
+        setHeaderName(e.detail.name || "Kasun Silva");
+        setHeaderAvatar(e.detail.avatarUrl || "");
+      }
+    }
+    window.addEventListener("admin_profile_updated", handleUpdate);
+    return () => {
+      window.removeEventListener("admin_profile_updated", handleUpdate);
+    };
+  }, []);
+
+  function getInitials(nameStr: string): string {
+    const parts = nameStr.trim().split(" ");
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return (nameStr.slice(0, 2) || "KS").toUpperCase();
+  }
 
   function handleLogout() {
     router.push("/login");
@@ -51,7 +84,7 @@ export default function AdminPage() {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white active:scale-95"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white active:scale-95 cursor-pointer"
               aria-label="Toggle navigation menu"
             >
               ☰
@@ -68,9 +101,18 @@ export default function AdminPage() {
             >
               Store
             </Link>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-[11px] font-black text-white">
-              KS
-            </div>
+            <button
+              type="button"
+              onClick={() => handleSelectSection("profile")}
+              className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-[11px] font-black text-white overflow-hidden border border-blue-400/40 active:scale-95 transition-transform cursor-pointer"
+              title="Admin Profile"
+            >
+              {headerAvatar ? (
+                <img src={headerAvatar} alt="Profile" className="h-full w-full object-cover" />
+              ) : (
+                getInitials(headerName)
+              )}
+            </button>
           </div>
         </header>
 
@@ -90,6 +132,14 @@ export default function AdminPage() {
           {activeSection === "customers" && <AdminCustomers />}
           {activeSection === "reports" && <AdminReports />}
           {activeSection === "ai" && <AdminAIMonitoring />}
+          {activeSection === "profile" && (
+            <AdminProfile
+              onProfileUpdate={(p: AdminProfileData) => {
+                setHeaderName(p.name);
+                setHeaderAvatar(p.avatarUrl);
+              }}
+            />
+          )}
         </main>
       </div>
     </div>

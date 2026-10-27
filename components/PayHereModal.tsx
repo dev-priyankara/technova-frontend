@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
+import { apiFetch, getSession } from "@/lib/auth";
 
 type PaymentStep = "form" | "processing" | "success" | "failed";
 
@@ -11,13 +12,13 @@ export default function PayHereModal() {
   const [step, setStep] = useState<PaymentStep>("form");
   const [processingMessage, setProcessingMessage] = useState("Connecting to PayHere Sandbox...");
 
-  // Customer billing details (always empty on load)
+  // Customer billing details
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerCity, setCustomerCity] = useState("");
 
-  // Card details (always empty on load)
+  // Card details
   const [cardNumber, setCardNumber] = useState("");
   const [cardHolder, setCardHolder] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
@@ -30,20 +31,21 @@ export default function PayHereModal() {
   const deliveryFee = subtotal > 50000 || subtotal === 0 ? 0 : 1500;
   const grandTotal = subtotal + deliveryFee;
 
-  // Reset all input fields to completely empty whenever checkout modal opens
+  // Populate from session or defaults when checkout modal opens
   useEffect(() => {
     if (isCheckoutOpen) {
       setStep("form");
       setCardError("");
-      setCustomerName("");
-      setCustomerEmail("");
-      setCustomerPhone("");
-      setCustomerCity("");
+      const session = getSession();
+      setCustomerName(session?.name || "");
+      setCustomerEmail(session?.email || "");
+      setCustomerPhone(session?.phone || "");
+      setCustomerCity(session?.city || "Colombo");
       setCardNumber("");
       setCardHolder("");
       setCardExpiry("");
       setCardCvv("");
-      setOrderId(`PAYHERE-TN-${Math.floor(100000 + Math.random() * 900000)}`);
+      setOrderId("");
     }
   }, [isCheckoutOpen]);
 
@@ -94,6 +96,11 @@ export default function PayHereModal() {
     e.preventDefault();
     setCardError("");
 
+    if (!customerName.trim() || !customerEmail.trim() || !customerPhone.trim()) {
+      setCardError("Please enter your name, email address, and phone number.");
+      return;
+    }
+
     const cleanNum = cardNumber.replace(/\s/g, "");
     if (cleanNum.length < 16) {
       setCardError("Please enter a valid 16-digit card number.");
@@ -114,18 +121,51 @@ export default function PayHereModal() {
 
     setTimeout(() => {
       setProcessingMessage("Contacting issuing bank for 3-D Secure Authorization...");
-    }, 900);
+    }, 800);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       // If user selected the declined test card
       if (cleanNum.endsWith("0002")) {
         setStep("failed");
-      } else {
+        return;
+      }
+
+      setProcessingMessage("Finalizing transaction & persisting order in database...");
+      try {
+        const orderData = await apiFetch<any>("/orders", {
+          method: "POST",
+          body: JSON.stringify({
+            items: items.map((i) => ({
+              product_id: i.product.id,
+              quantity: i.quantity,
+            })),
+            shipping_address: {
+              recipient_name: customerName.trim(),
+              street: "Delivery Address",
+              city: customerCity.trim() || "Colombo",
+              district: "Western Province",
+              postal_code: "",
+              phone: customerPhone.trim(),
+            },
+            payment_method: "PayHere",
+            payment_status: "Paid",
+            customer_email: customerEmail.trim(),
+          }),
+        });
+
         const txn = `TXN_PH_${Date.now()}`;
         setTransactionId(txn);
+        setOrderId(orderData.id);
         setStep("success");
+      } catch (err) {
+        setCardError(
+          err instanceof Error
+            ? err.message
+            : "Failed to create order in database. Please try again."
+        );
+        setStep("form");
       }
-    }, 2200);
+    }, 1800);
   }
 
   function handleCompleteOrder() {

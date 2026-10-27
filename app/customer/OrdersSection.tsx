@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { dummyOrders, calculateOrderTotals } from "@/lib/customerData";
+import { dummyOrders, calculateOrderTotals, type Order } from "@/lib/customerData";
+import { apiFetch } from "@/lib/auth";
 
 type StatusFilter = "All" | "Pending" | "Processing" | "Delivered";
 
@@ -11,11 +12,55 @@ interface OrdersSectionProps {
 }
 
 export default function OrdersSection({ onSelectOrder }: OrdersSectionProps) {
+  const [orders, setOrders] = useState<Order[]>(dummyOrders);
   const [selectedFilter, setSelectedFilter] = useState<StatusFilter>("All");
   const [searchQuery, setSearchQuery] = useState("");
 
+  useEffect(() => {
+    let isMounted = true;
+    apiFetch<any[]>("/orders")
+      .then((data) => {
+        if (!isMounted || !Array.isArray(data) || data.length === 0) return;
+        const mapped: Order[] = data.map((o) => ({
+          id: o.id,
+          date: o.date ? o.date.split("T")[0] : new Date().toISOString().split("T")[0],
+          status: o.status as any,
+          items: (o.items || []).map((it: any) => ({
+            id: it.product_id,
+            name: it.name,
+            category: "Hardware Component",
+            quantity: it.quantity,
+            price: it.price,
+            sku: it.sku,
+          })),
+          shippingAddress: {
+            recipientName: o.shipping_address?.recipient_name || "",
+            street: o.shipping_address?.street || "",
+            city: o.shipping_address?.city || "",
+            district: o.shipping_address?.district || "",
+            postalCode: o.shipping_address?.postal_code || "",
+            phone: o.shipping_address?.phone || "",
+          },
+          paymentMethod: {
+            type: o.payment_method || "PayHere Online Gateway",
+            details: "Direct Payment",
+            status: o.payment_status || "Paid",
+          },
+          trackingNumber: `TN-EXP-${o.id}`,
+          deliveryDate: "Estimated 2-3 Business Days",
+        }));
+        setOrders(mapped);
+      })
+      .catch((err) => {
+        console.warn("Could not fetch customer orders from backend, using default list:", err);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const filteredOrders = useMemo(() => {
-    return dummyOrders.filter((order) => {
+    return orders.filter((order) => {
       const matchesStatus =
         selectedFilter === "All" ? true : order.status === selectedFilter;
 
@@ -29,13 +74,13 @@ export default function OrdersSection({ onSelectOrder }: OrdersSectionProps) {
 
       return matchesStatus && matchesSearch;
     });
-  }, [selectedFilter, searchQuery]);
+  }, [orders, selectedFilter, searchQuery]);
 
   const countByStatus = {
-    All: dummyOrders.length,
-    Pending: dummyOrders.filter((o) => o.status === "Pending").length,
-    Processing: dummyOrders.filter((o) => o.status === "Processing").length,
-    Delivered: dummyOrders.filter((o) => o.status === "Delivered").length,
+    All: orders.length,
+    Pending: orders.filter((o) => o.status === "Pending").length,
+    Processing: orders.filter((o) => o.status === "Processing").length,
+    Delivered: orders.filter((o) => o.status === "Delivered").length,
   };
 
   return (

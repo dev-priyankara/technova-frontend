@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
-import { mockAdminSuppliers, type AdminSupplier } from "@/lib/adminData";
+import React, { useEffect, useState } from "react";
+import { type AdminSupplier } from "@/lib/adminData";
+import { apiFetch } from "@/lib/auth";
 
 export default function AdminSuppliers() {
-  const [suppliers, setSuppliers] = useState<AdminSupplier[]>(mockAdminSuppliers);
+  const [suppliers, setSuppliers] = useState<AdminSupplier[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toast, setToast] = useState("");
 
@@ -16,24 +17,74 @@ export default function AdminSuppliers() {
     category: "Graphics Cards",
   });
 
-  function handleAddSupplier(e: React.FormEvent) {
-    e.preventDefault();
-    const newSup: AdminSupplier = {
-      id: `sup-${Date.now().toString().slice(-4)}`,
-      companyName: form.companyName,
-      contactPerson: form.contactPerson,
-      email: form.email,
-      phone: form.phone,
-      suppliedCategories: [form.category],
-      pendingRequests: 0,
-      status: "Active",
+  useEffect(() => {
+    let isMounted = true;
+    apiFetch<any[]>("/suppliers")
+      .then((data) => {
+        if (!isMounted || !Array.isArray(data)) return;
+        const mapped: AdminSupplier[] = data.map((s) => ({
+          id: s.id,
+          companyName: s.company_name,
+          contactPerson: s.contact_person,
+          email: s.email,
+          phone: s.phone || "",
+          suppliedCategories: typeof s.supplied_categories === "string" ? s.supplied_categories.split(",").map((c: string) => c.trim()) : [],
+          pendingRequests: s.pending_requests || 0,
+          status: s.status as any,
+        }));
+        setSuppliers(mapped);
+      })
+      .catch((err) => console.warn("Failed to load suppliers from database:", err));
+    return () => {
+      isMounted = false;
     };
+  }, []);
 
-    setSuppliers([...suppliers, newSup]);
-    setIsModalOpen(false);
-    setForm({ companyName: "", contactPerson: "", email: "", phone: "", category: "Graphics Cards" });
-    setToast("Supplier onboarded successfully!");
-    setTimeout(() => setToast(""), 4000);
+  async function handleDeleteSupplier(id: string, name: string) {
+    if (!confirm(`Are you sure you want to remove supplier "${name}" from database?`)) return;
+    try {
+      await apiFetch<any>(`/suppliers/${id}`, { method: "DELETE" });
+      setSuppliers((prev) => prev.filter((s) => s.id !== id));
+      setToast(`Supplier "${name}" removed successfully.`);
+      setTimeout(() => setToast(""), 3500);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete supplier.");
+    }
+  }
+
+  async function handleAddSupplier(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      const created = await apiFetch<any>("/suppliers", {
+        method: "POST",
+        body: JSON.stringify({
+          company_name: form.companyName.trim(),
+          contact_person: form.contactPerson.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          supplied_categories: form.category,
+        }),
+      });
+
+      const newSup: AdminSupplier = {
+        id: created.id,
+        companyName: created.company_name,
+        contactPerson: created.contact_person,
+        email: created.email,
+        phone: created.phone,
+        suppliedCategories: [form.category],
+        pendingRequests: 0,
+        status: "Active",
+      };
+
+      setSuppliers([...suppliers, newSup]);
+      setIsModalOpen(false);
+      setForm({ companyName: "", contactPerson: "", email: "", phone: "", category: "Graphics Cards" });
+      setToast("Supplier onboarded successfully in MySQL database!");
+      setTimeout(() => setToast(""), 4000);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to onboard supplier.");
+    }
   }
 
   function handleSendRequest(companyName: string) {
@@ -84,9 +135,19 @@ export default function AdminSuppliers() {
                 <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-base font-black text-white">
                   🏢
                 </span>
-                <span className="rounded-full bg-emerald-500/10 border border-emerald-400/30 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
-                  ● {sup.status}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-emerald-500/10 border border-emerald-400/30 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+                    ● {sup.status}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteSupplier(sup.id, sup.companyName)}
+                    className="p-1 rounded text-rose-400 hover:bg-rose-500/10 text-xs"
+                    title="Delete Supplier"
+                  >
+                    🗑️
+                  </button>
+                </div>
               </div>
 
               <h3 className="mt-3 text-base font-bold text-white">{sup.companyName}</h3>

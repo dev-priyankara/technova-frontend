@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { mockAdminUsers, type AdminUser, type AdminUserRole } from "@/lib/adminData";
+import { apiFetch } from "@/lib/auth";
 
 export default function AdminUsers() {
-  const [users, setUsers] = useState<AdminUser[]>(mockAdminUsers);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
   const [roleFilter, setRoleFilter] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,6 +26,38 @@ export default function AdminUsers() {
     tempPassword: "",
   });
 
+  const ROLE_ID_MAP: Record<AdminUserRole, number> = {
+    Admin: 1,
+    Supplier: 2,
+    Cashier: 3,
+    Customer: 4,
+  };
+
+  function loadUsers() {
+    setLoading(true);
+    apiFetch<any[]>("/users")
+      .then((data) => {
+        if (!Array.isArray(data)) return;
+        const mapped: AdminUser[] = data.map((u) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          role: (u.role || "Customer") as AdminUserRole,
+          phone: u.phone || "",
+          status: u.status === "Inactive" ? "Inactive" : "Active",
+          createdAt: u.created_at ? u.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+        }));
+        setUsers(mapped);
+      })
+      .catch((err) => console.warn("Failed to load users from database:", err))
+      .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+
   const filteredUsers = users.filter((u) => {
     const matchesRole = roleFilter === "All" ? true : u.role === roleFilter;
     const matchesSearch =
@@ -34,44 +68,78 @@ export default function AdminUsers() {
     return matchesRole && matchesSearch;
   });
 
-  function handleCreateUser(e: React.FormEvent) {
+  async function handleCreateUser(e: React.FormEvent) {
     e.preventDefault();
-    const created: AdminUser = {
-      id: `usr-${Date.now().toString().slice(-4)}`,
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role,
-      phone: newUser.phone,
-      status: "Active",
-      createdAt: new Date().toISOString().split("T")[0],
-    };
+    try {
+      const createdUser = await apiFetch<any>("/users", {
+        method: "POST",
+        body: JSON.stringify({
+          name: newUser.name.trim(),
+          email: newUser.email.trim(),
+          role: newUser.role,
+          role_id: ROLE_ID_MAP[newUser.role],
+          phone: newUser.phone.trim(),
+          tempPassword: newUser.tempPassword || "Temp@1234",
+        }),
+      });
 
-    setUsers([created, ...users]);
-    setIsModalOpen(false);
-    setNewUser({
-      name: "",
-      email: "",
-      role: "Cashier",
-      phone: "",
-      tempPassword: "",
-    });
+      const created: AdminUser = {
+        id: createdUser.id,
+        name: createdUser.name,
+        email: createdUser.email,
+        role: createdUser.role,
+        phone: createdUser.phone,
+        status: "Active",
+        createdAt: new Date().toISOString().split("T")[0],
+      };
 
-    setSuccessToast(`New ${created.role} account created successfully!`);
-    setTimeout(() => setSuccessToast(""), 4000);
+      setUsers([created, ...users]);
+      setIsModalOpen(false);
+      setNewUser({
+        name: "",
+        email: "",
+        role: "Cashier",
+        phone: "",
+        tempPassword: "",
+      });
+
+      setSuccessToast(`New ${created.role} account created successfully in MySQL!`);
+      setTimeout(() => setSuccessToast(""), 4000);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to create user account.");
+    }
   }
 
-  function toggleUserStatus(id: string) {
-    setUsers(
-      users.map((u) =>
-        u.id === id
-          ? { ...u, status: u.status === "Active" ? "Inactive" : "Active" }
-          : u,
-      ),
-    );
+  async function toggleUserStatus(id: string) {
+    try {
+      await apiFetch<any>(`/users/${id}/toggle-status`, { method: "PATCH" });
+      setUsers(
+        users.map((u) =>
+          u.id === id
+            ? { ...u, status: u.status === "Active" ? "Inactive" : "Active" }
+            : u,
+        ),
+      );
+    } catch (err) {
+      console.warn("Failed to toggle user status:", err);
+    }
+  }
+
+  async function handleDeleteUser(id: string, name: string) {
+    if (!confirm(`Are you sure you want to delete user "${name}" from the database?`)) return;
+    try {
+      await apiFetch<any>(`/users/${id}`, { method: "DELETE" });
+      setUsers(users.filter((u) => u.id !== id));
+      setSuccessToast(`User "${name}" deleted successfully.`);
+      setTimeout(() => setSuccessToast(""), 3500);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete user.");
+    }
   }
 
   return (
     <div className="space-y-6">
+
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl">
         <div>
@@ -82,7 +150,7 @@ export default function AdminUsers() {
             Internal User Management
           </h1>
           <p className="mt-1 text-xs text-slate-300">
-            Create and maintain authorized Admin, Cashier, and Supplier accounts for TECHNOVA operations.
+            Create and maintain authorized Admin, Cashier, Supplier, and Customer accounts for TECHNOVA operations.
           </p>
         </div>
 
@@ -105,7 +173,7 @@ export default function AdminUsers() {
       {/* Controls: Role filter tabs + Search */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          {["All", "Admin", "Cashier", "Supplier"].map((r) => {
+          {["All", "Admin", "Cashier", "Supplier", "Customer"].map((r) => {
             const isActive = roleFilter === r;
             return (
               <button
@@ -152,6 +220,8 @@ export default function AdminUsers() {
                       ? "bg-purple-500/10 text-purple-300 border border-purple-400/30"
                       : user.role === "Cashier"
                       ? "bg-blue-500/10 text-blue-300 border border-blue-400/30"
+                      : user.role === "Customer"
+                      ? "bg-slate-500/10 text-slate-300 border border-slate-400/30"
                       : "bg-emerald-500/10 text-emerald-300 border border-emerald-400/30"
                   }`}
                 >
@@ -205,7 +275,9 @@ export default function AdminUsers() {
                           ? "bg-purple-500/10 text-purple-300 border border-purple-400/30"
                           : user.role === "Cashier"
                           ? "bg-blue-500/10 text-blue-300 border border-blue-400/30"
-                          : "bg-emerald-500/10 text-emerald-300 border border-emerald-400/30"
+                          : user.role === "Customer"
+                      ? "bg-slate-500/10 text-slate-300 border border-slate-400/30"
+                      : "bg-emerald-500/10 text-emerald-300 border border-emerald-400/30"
                       }`}
                     >
                       {user.role}
@@ -233,14 +305,25 @@ export default function AdminUsers() {
                   </td>
 
                   <td className="px-6 py-4 text-right">
-                    <button
-                      type="button"
-                      onClick={() => toggleUserStatus(user.id)}
-                      className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-200 hover:bg-white/10 transition-all"
-                    >
-                      Toggle Status
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => toggleUserStatus(user.id)}
+                        className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-200 hover:bg-white/10 transition-all"
+                      >
+                        {user.status === "Active" ? "Deactivate" : "Activate"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteUser(user.id, user.name)}
+                        className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-2.5 py-1.5 text-xs font-bold text-rose-300 hover:bg-rose-500 hover:text-white transition-all"
+                        title="Delete User"
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </td>
+
                 </tr>
               ))}
             </tbody>
@@ -298,6 +381,7 @@ export default function AdminUsers() {
                   <option value="Cashier">Cashier (POS & Billing Access)</option>
                   <option value="Supplier">Supplier (Supply Management Access)</option>
                   <option value="Admin">Admin (Full System Access)</option>
+                  <option value="Customer">Customer (Store Access)</option>
                 </select>
               </div>
 

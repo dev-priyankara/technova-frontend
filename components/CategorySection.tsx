@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { apiFetch } from "@/lib/auth";
 
 export type CategoryItem = {
   name: string;
@@ -142,10 +143,34 @@ export default function CategorySection({
   onSelectCategory,
 }: CategorySectionProps) {
   const [showAll, setShowAll] = useState(false);
+  const [categories, setCategories] = useState<CategoryItem[]>(initialCategories);
+
+  useEffect(() => {
+    let isMounted = true;
+    apiFetch<any[]>("/categories")
+      .then((data) => {
+        if (!isMounted || !Array.isArray(data) || data.length === 0) return;
+        setCategories((prev) =>
+          prev.map((cat) => {
+            const found = data.find(
+              (c) =>
+                c.name.toLowerCase() === cat.name.toLowerCase() ||
+                c.slug.toLowerCase() === cat.filterKey.toLowerCase(),
+            );
+            return found ? { ...cat, itemCount: found.item_count } : cat;
+          }),
+        );
+      })
+      .catch((err) => console.warn("Using default category counts:", err));
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const displayedCategories = showAll
-    ? [...initialCategories, ...additionalCategories]
-    : initialCategories;
+    ? [...categories, ...additionalCategories]
+    : categories;
 
   function handleCategoryClick(cat: CategoryItem) {
     if (onSelectCategory) {

@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { mockAdminCategories, type AdminCategory } from "@/lib/adminData";
+import { apiFetch } from "@/lib/auth";
 
 export default function AdminCategories() {
-  const [categories, setCategories] = useState<AdminCategory[]>(mockAdminCategories);
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toast, setToast] = useState("");
 
@@ -14,22 +16,70 @@ export default function AdminCategories() {
     slug: "",
   });
 
-  function handleAddCategory(e: React.FormEvent) {
-    e.preventDefault();
-    const newCat: AdminCategory = {
-      id: `cat-${Date.now().toString().slice(-4)}`,
-      name: form.name,
-      description: form.description,
-      slug: form.slug || form.name.toLowerCase().replace(/\s+/g, "-"),
-      itemCount: 0,
-    };
-
-    setCategories([...categories, newCat]);
-    setIsModalOpen(false);
-    setForm({ name: "", description: "", slug: "" });
-    setToast("Category added successfully!");
-    setTimeout(() => setToast(""), 4000);
+  function loadCategories() {
+    setLoading(true);
+    apiFetch<any[]>("/categories")
+      .then((data) => {
+        if (!Array.isArray(data)) return;
+        const mapped: AdminCategory[] = data.map((c) => ({
+          id: c.id,
+          name: c.name,
+          description: c.description,
+          itemCount: c.item_count,
+          slug: c.slug,
+        }));
+        setCategories(mapped);
+      })
+      .catch((err) => console.warn("Failed to load categories from database:", err))
+      .finally(() => setLoading(false));
   }
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  async function handleAddCategory(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      const created = await apiFetch<any>("/categories", {
+        method: "POST",
+        body: JSON.stringify({
+          name: form.name.trim(),
+          description: form.description.trim(),
+          slug: form.slug ? form.slug.trim() : undefined,
+        }),
+      });
+
+      const newCat: AdminCategory = {
+        id: created.id,
+        name: created.name,
+        description: created.description,
+        slug: created.slug,
+        itemCount: 0,
+      };
+
+      setCategories([...categories, newCat]);
+      setIsModalOpen(false);
+      setForm({ name: "", description: "", slug: "" });
+      setToast("Category added successfully and saved to MySQL database!");
+      setTimeout(() => setToast(""), 4000);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to add category.");
+    }
+  }
+
+  async function handleDeleteCategory(id: string, name: string) {
+    if (!confirm(`Are you sure you want to delete category "${name}"?`)) return;
+    try {
+      await apiFetch<any>(`/categories/${id}`, { method: "DELETE" });
+      setCategories(categories.filter((c) => c.id !== id));
+      setToast(`Category "${name}" deleted successfully.`);
+      setTimeout(() => setToast(""), 3500);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete category.");
+    }
+  }
+
 
   return (
     <div className="space-y-6">
@@ -85,11 +135,22 @@ export default function AdminCategories() {
             </div>
             <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400 font-mono">
               <span>/{cat.slug}</span>
-              <span className="text-emerald-400 font-semibold">Active</span>
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-400 font-semibold">Active</span>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteCategory(cat.id, cat.name)}
+                  className="rounded-lg p-1 text-slate-400 hover:bg-rose-500/20 hover:text-rose-400 transition-colors"
+                  title="Delete category"
+                >
+                  🗑️
+                </button>
+              </div>
             </div>
           </div>
         ))}
       </div>
+
 
       {/* Modal: Add Category */}
       {isModalOpen && (
