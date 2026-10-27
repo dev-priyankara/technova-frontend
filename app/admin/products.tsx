@@ -41,6 +41,82 @@ export default function AdminProducts() {
     specs: "",
   });
 
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    category: "Laptops",
+    sku: "",
+    costPrice: 0,
+    sellingPrice: 0,
+    stockQty: 0,
+    minStockLevel: 3,
+    specs: "",
+    status: "In Stock" as AdminProduct["status"],
+  });
+
+  function openEditModal(prod: AdminProduct) {
+    setEditingProduct(prod);
+    setEditForm({
+      name: prod.name,
+      category: prod.category,
+      sku: prod.sku,
+      costPrice: prod.costPrice,
+      sellingPrice: prod.sellingPrice,
+      stockQty: prod.stockQty,
+      minStockLevel: prod.minStockLevel,
+      specs: prod.specs,
+      status: prod.status,
+    });
+    setIsEditModalOpen(true);
+  }
+
+  async function handleUpdateProduct(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingProduct) return;
+    try {
+      await apiFetch<any>(`/products/${editingProduct.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          name: editForm.name.trim(),
+          category: editForm.category,
+          sku: editForm.sku.trim().toUpperCase(),
+          price: Number(editForm.sellingPrice),
+          cost_price: Number(editForm.costPrice),
+          stock_count: Number(editForm.stockQty),
+          min_stock_level: Number(editForm.minStockLevel),
+          specs: editForm.specs ? editForm.specs.split(",").map((s) => s.trim()) : [],
+        }),
+      });
+
+      const updatedQty = Number(editForm.stockQty);
+      const updatedMin = Number(editForm.minStockLevel);
+      const autoStatus: AdminProduct["status"] =
+        updatedQty <= 0 ? "Out of Stock" : updatedQty <= updatedMin ? "Low Stock" : "In Stock";
+
+      const updated: AdminProduct = {
+        ...editingProduct,
+        name: editForm.name.trim(),
+        category: editForm.category,
+        sku: editForm.sku.trim().toUpperCase(),
+        costPrice: Number(editForm.costPrice),
+        sellingPrice: Number(editForm.sellingPrice),
+        stockQty: updatedQty,
+        minStockLevel: updatedMin,
+        specs: editForm.specs,
+        status: editForm.status || autoStatus,
+      };
+
+      setProducts(products.map((p) => (p.id === editingProduct.id ? updated : p)));
+      setIsEditModalOpen(false);
+      setEditingProduct(null);
+      setToast(`Product "${updated.name}" updated successfully!`);
+      setTimeout(() => setToast(""), 4000);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update product.");
+    }
+  }
+
   function loadData() {
     setLoading(true);
     Promise.all([
@@ -188,9 +264,6 @@ export default function AdminProducts() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl">
         <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-300">
-            💻 Hardware Catalogue
-          </span>
           <h1 className="mt-2 text-2xl sm:text-3xl font-black text-white">
             Product Management
           </h1>
@@ -215,75 +288,79 @@ export default function AdminProducts() {
         </div>
       )}
 
-      {/* Time-based Arrival Filter Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/60 p-3.5 backdrop-blur-xl">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 pl-1">
-            <span>🕒</span> Arrival Filter:
-          </span>
+      {/* Unified Filter, Search & Arrival Controls */}
+      <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 backdrop-blur-xl space-y-3.5 shadow-lg">
+        {/* Search bar and Category filter */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="relative flex-1 max-w-md">
+            <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 text-xs">
+              🔍
+            </span>
+            <input
+              type="text"
+              placeholder="Search by name, SKU or model..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-xl border border-white/10 bg-slate-950/70 py-2.5 pl-10 pr-3.5 text-xs text-white placeholder-slate-500 focus:border-blue-400 focus:outline-none transition-colors"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedCat}
+              onChange={(e) => setSelectedCat(e.target.value)}
+              className="w-full sm:w-auto rounded-xl border border-white/10 bg-slate-950/70 px-4 py-2.5 text-xs font-bold text-white focus:border-blue-400 focus:outline-none cursor-pointer transition-colors"
+            >
+              <option value="All">All Categories ({products.length})</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.name}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {[
-            { label: "All Time", key: "all" as TimeFilterPeriod, count: allCount, icon: "📦" },
-            { label: "Today", key: "today" as TimeFilterPeriod, count: todayCount, icon: "⚡" },
-            { label: "This Week", key: "weekly" as TimeFilterPeriod, count: weeklyCount, icon: "📅" },
-            { label: "This Month", key: "monthly" as TimeFilterPeriod, count: monthlyCount, icon: "🗓️" },
-          ].map((tab) => {
-            const isActive = timeFilter === tab.key;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setTimeFilter(tab.key)}
-                className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all ${
-                  isActive
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-blue-400"
-                    : "border border-white/10 bg-slate-950/60 text-slate-300 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                <span>{tab.icon}</span>
-                <span>{tab.label}</span>
-                <span
-                  className={`ml-1 rounded-full px-1.5 py-0.2 text-[10px] font-mono ${
-                    isActive ? "bg-white/20 text-white" : "bg-white/5 text-slate-400"
+
+        {/* Arrival timeframe tabs */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 border-t border-white/5 pt-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 pl-0.5">
+              <span>🕒</span> Arrival Filter:
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {[
+              { label: "All Time", key: "all" as TimeFilterPeriod, count: allCount, icon: "📦" },
+              { label: "Today", key: "today" as TimeFilterPeriod, count: todayCount, icon: "⚡" },
+              { label: "This Week", key: "weekly" as TimeFilterPeriod, count: weeklyCount, icon: "📅" },
+              { label: "This Month", key: "monthly" as TimeFilterPeriod, count: monthlyCount, icon: "🗓️" },
+            ].map((tab) => {
+              const isActive = timeFilter === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setTimeFilter(tab.key)}
+                  className={`inline-flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                    isActive
+                      ? "bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-blue-400"
+                      : "border border-white/10 bg-slate-950/60 text-slate-300 hover:bg-white/10 hover:text-white"
                   }`}
                 >
-                  {tab.count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <select
-            value={selectedCat}
-            onChange={(e) => setSelectedCat(e.target.value)}
-            className="rounded-xl border border-white/10 bg-slate-900/60 px-3.5 py-2 text-xs font-bold text-white focus:border-blue-400 focus:outline-none"
-          >
-            <option value="All">All Categories ({products.length})</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.name}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="relative min-w-[260px]">
-          <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-xs">
-            🔍
-          </span>
-          <input
-            type="text"
-            placeholder="Search by name, SKU or model..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-slate-900/60 py-2 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:border-blue-400 focus:outline-none"
-          />
+                  <span>{tab.icon}</span>
+                  <span>{tab.label}</span>
+                  <span
+                    className={`ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-mono ${
+                      isActive ? "bg-white/20 text-white" : "bg-white/5 text-slate-400"
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -301,14 +378,23 @@ export default function AdminProducts() {
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-sm text-white truncate max-w-[200px]">{p.name}</span>
                   <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                       p.status === "In Stock"
-                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-400/30"
+                        ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-sm shadow-emerald-500/10"
                         : p.status === "Low Stock"
-                        ? "bg-amber-500/10 text-amber-300 border border-amber-400/30"
-                        : "bg-rose-500/10 text-rose-300 border border-rose-500/30"
+                        ? "bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-sm shadow-amber-500/10"
+                        : "bg-rose-500/15 text-rose-300 border-rose-500/30 shadow-sm shadow-rose-500/10"
                     }`}
                   >
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        p.status === "In Stock"
+                          ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)]"
+                          : p.status === "Low Stock"
+                          ? "bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.9)]"
+                          : "bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.9)]"
+                      }`}
+                    />
                     {p.status}
                   </span>
                 </div>
@@ -335,14 +421,24 @@ export default function AdminProducts() {
                       <span className="text-[10px] text-slate-400 block">Stock Qty</span>
                       <span className="font-bold text-white">{p.stockQty} Units</span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteProduct(p.id, p.name)}
-                      className="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg text-xs"
-                      title="Delete product"
-                    >
-                      🗑️
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(p)}
+                        className="p-1.5 text-blue-400 hover:bg-blue-500/10 rounded-lg text-xs"
+                        title="Edit product"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteProduct(p.id, p.name)}
+                        className="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded-lg text-xs"
+                        title="Delete product"
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -393,15 +489,24 @@ export default function AdminProducts() {
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold border ${
                           p.status === "In Stock"
-                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-400/30"
+                            ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-sm shadow-emerald-500/10"
                             : p.status === "Low Stock"
-                            ? "bg-amber-500/10 text-amber-300 border border-amber-400/30"
-                            : "bg-rose-500/10 text-rose-300 border border-rose-500/30"
+                            ? "bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-sm shadow-amber-500/10"
+                            : "bg-rose-500/15 text-rose-300 border-rose-500/30 shadow-sm shadow-rose-500/10"
                         }`}
                       >
-                        ● {p.status}
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            p.status === "In Stock"
+                              ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)]"
+                              : p.status === "Low Stock"
+                              ? "bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.9)]"
+                              : "bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.9)]"
+                          }`}
+                        />
+                        {p.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 font-mono text-xs">
@@ -415,15 +520,26 @@ export default function AdminProducts() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteProduct(p.id, p.name)}
-                        className="p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors font-medium text-xs inline-flex items-center gap-1"
-                        title="Delete Product"
-                      >
-                        <span>🗑️</span>
-                        <span className="hidden lg:inline">Delete</span>
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(p)}
+                          className="p-1.5 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-colors font-medium text-xs inline-flex items-center gap-1 cursor-pointer"
+                          title="Edit Product"
+                        >
+                          <span>✏️</span>
+                          <span className="hidden lg:inline">Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteProduct(p.id, p.name)}
+                          className="p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-colors font-medium text-xs inline-flex items-center gap-1 cursor-pointer"
+                          title="Delete Product"
+                        >
+                          <span>🗑️</span>
+                          <span className="hidden lg:inline">Delete</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -560,6 +676,154 @@ export default function AdminProducts() {
                   className="flex-1 rounded-xl bg-blue-600 py-2.5 font-bold text-white hover:bg-blue-500 shadow-lg shadow-blue-600/30"
                 >
                   Add to Catalogue
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Modal: Edit Product */}
+      {isEditModalOpen && editingProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div>
+                <h3 className="text-base font-black text-white">Edit Hardware Product</h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">Product ID: {editingProduct.id}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditModalOpen(false)}
+                className="text-slate-400 hover:text-white font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateProduct} className="mt-4 space-y-3.5 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1">Product Title</label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white focus:border-blue-400 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">Category</label>
+                  <select
+                    value={editForm.category}
+                    onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white focus:border-blue-400 focus:outline-none"
+                  >
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">SKU / Model Code</label>
+                  <input
+                    type="text"
+                    required
+                    value={editForm.sku}
+                    onChange={(e) => setEditForm({ ...editForm, sku: e.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white uppercase focus:border-blue-400 focus:outline-none font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">Procurement Cost (LKR)</label>
+                  <input
+                    type="number"
+                    required
+                    value={editForm.costPrice}
+                    onChange={(e) => setEditForm({ ...editForm, costPrice: Number(e.target.value) })}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white focus:border-blue-400 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">Selling Price (LKR)</label>
+                  <input
+                    type="number"
+                    required
+                    value={editForm.sellingPrice}
+                    onChange={(e) => setEditForm({ ...editForm, sellingPrice: Number(e.target.value) })}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white focus:border-blue-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">Available Stock Qty</label>
+                  <input
+                    type="number"
+                    required
+                    value={editForm.stockQty}
+                    onChange={(e) => setEditForm({ ...editForm, stockQty: Number(e.target.value) })}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white focus:border-blue-400 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">Min Reorder Threshold</label>
+                  <input
+                    type="number"
+                    required
+                    value={editForm.minStockLevel}
+                    onChange={(e) => setEditForm({ ...editForm, minStockLevel: Number(e.target.value) })}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white focus:border-blue-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1">Stock Status</label>
+                <select
+                  value={editForm.status}
+                  onChange={(e) => setEditForm({ ...editForm, status: e.target.value as any })}
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white focus:border-blue-400 focus:outline-none"
+                >
+                  <option value="In Stock">In Stock</option>
+                  <option value="Low Stock">Low Stock</option>
+                  <option value="Out of Stock">Out of Stock</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-300 mb-1">Hardware Specifications</label>
+                <textarea
+                  rows={2}
+                  value={editForm.specs}
+                  onChange={(e) => setEditForm({ ...editForm, specs: e.target.value })}
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white focus:border-blue-400 focus:outline-none"
+                />
+              </div>
+
+              <div className="pt-2 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="flex-1 rounded-xl border border-white/10 bg-white/5 py-2.5 font-bold text-slate-300 hover:bg-white/10 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 rounded-xl bg-blue-600 py-2.5 font-bold text-white hover:bg-blue-500 shadow-lg shadow-blue-600/30 cursor-pointer"
+                >
+                  Save Product Changes
                 </button>
               </div>
             </form>

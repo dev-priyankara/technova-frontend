@@ -66,7 +66,7 @@ export default function SupplierReturns() {
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl">
         <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-300">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-300">
             🔄 RMA Warranty & Defect Processing
           </span>
           <h1 className="mt-2 text-2xl sm:text-3xl font-black text-white">
@@ -79,7 +79,7 @@ export default function SupplierReturns() {
 
         <button
           onClick={() => setShowLogModal(true)}
-          className="inline-flex items-center gap-2 rounded-2xl bg-amber-600 px-4 py-3 text-xs font-bold text-white hover:bg-amber-500 transition shadow-lg shadow-amber-600/30 shrink-0"
+          className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-3 text-xs font-extrabold text-white shadow-lg shadow-blue-600/30 hover:brightness-110 active:scale-95 transition-all shrink-0"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -94,10 +94,10 @@ export default function SupplierReturns() {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition border ${
+            className={`rounded-2xl px-4 py-2 text-xs font-bold transition-all ${
               filter === f
-                ? "border-amber-400 bg-amber-600 text-white"
-                : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                ? "bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-blue-400"
+                : "border border-white/10 bg-slate-900/40 text-slate-300 hover:bg-white/10"
             }`}
           >
             {f === "All" ? "All Returned Units" : f}
@@ -126,7 +126,7 @@ export default function SupplierReturns() {
                   {rma.productName}
                 </h3>
                 <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 mt-0.5">
-                  <span className="font-mono text-cyan-300">{rma.serialNumber}</span>
+                  <span className="font-mono text-blue-300">{rma.serialNumber}</span>
                   <span>•</span>
                   <span>From: <strong className="text-slate-200">{rma.fromShop}</strong></span>
                 </div>
@@ -245,7 +245,7 @@ export default function SupplierReturns() {
                 <select
                   value={targetShop}
                   onChange={(e) => setTargetShop(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none"
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400"
                 >
                   {mockShopBranches.map((b) => (
                     <option key={b.id} value={b.name}>{b.name}</option>
@@ -263,7 +263,7 @@ export default function SupplierReturns() {
                     const found = mockSupplierProducts.find((p) => p.id === e.target.value);
                     if (found) setSelectedProduct(found);
                   }}
-                  className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none"
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400"
                 >
                   {mockSupplierProducts.map((p) => (
                     <option key={p.id} value={p.id}>{p.name}</option>
@@ -281,7 +281,7 @@ export default function SupplierReturns() {
                   value={serialNo}
                   onChange={(e) => setSerialNo(e.target.value)}
                   placeholder="e.g. SN-602-V513-XXXXXX"
-                  className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none font-mono"
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400 font-mono"
                 />
               </div>
 
@@ -292,7 +292,7 @@ export default function SupplierReturns() {
                 <select
                   value={reason}
                   onChange={(e) => setReason(e.target.value as any)}
-                  className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none"
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400"
                 >
                   <option value="Dead On Arrival (DOA)">Dead On Arrival (DOA)</option>
                   <option value="GPU Artifacting / Freezing">GPU Artifacting / Freezing</option>
@@ -311,21 +311,21 @@ export default function SupplierReturns() {
                   value={issue}
                   onChange={(e) => setIssue(e.target.value)}
                   placeholder="Describe failure symptoms observed by customer / counter..."
-                  className="w-full rounded-xl border border-white/10 bg-slate-800 p-3 text-white outline-none resize-none"
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 p-3.5 text-white outline-none focus:border-blue-400 resize-none"
                 />
               </div>
 
               <div className="pt-2 flex gap-3">
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-amber-600 py-2.5 font-bold text-white hover:bg-amber-500 transition shadow"
+                  className="flex-1 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3 font-extrabold text-white shadow-lg shadow-blue-600/30 hover:brightness-110 active:scale-95 transition-all"
                 >
                   Log Return & Issue RMA
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowLogModal(false)}
-                  className="rounded-xl border border-white/10 px-4 py-2.5 font-bold text-slate-300 hover:bg-white/5"
+                  className="rounded-2xl border border-white/10 px-5 py-3 font-bold text-slate-300 hover:bg-white/5 transition"
                 >
                   Cancel
                 </button>

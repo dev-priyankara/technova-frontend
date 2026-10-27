@@ -22,9 +22,6 @@ export default function AdminOverview({ onNavigate }: OverviewProps) {
       {/* Welcome Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-3xl border border-white/10 bg-gradient-to-r from-blue-950/70 via-slate-900 to-indigo-950/70 p-6 backdrop-blur-xl shadow-xl shadow-blue-950/40">
         <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-300">
-            📊 Executive Management
-          </span>
           <h1 className="mt-2 text-2xl sm:text-3xl font-black text-white">
             TECHNOVA Store Operations
           </h1>

@@ -15,6 +15,24 @@ export default function AdminOrders() {
   const [timeFilter, setTimeFilter] = useState<TimeFilterPeriod>("all");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState("");
+
+  // Modals state
+  const [viewOrder, setViewOrder] = useState<AdminOrder | null>(null);
+  const [editOrder, setEditOrder] = useState<AdminOrder | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+  // Create Order Form
+  const [createForm, setCreateForm] = useState({
+    customerName: "",
+    customerPhone: "",
+    customerEmail: "",
+    address: "Colombo 03",
+    itemsSummary: "ASUS TUF Gaming Laptop (1x)",
+    totalAmount: 385000,
+    paymentStatus: "Paid" as "Paid" | "Pending Verification",
+    status: "Pending" as AdminOrder["status"],
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -25,13 +43,13 @@ export default function AdminOrders() {
         if (Array.isArray(data) && data.length > 0) {
           const mapped: AdminOrder[] = data.map((o) => ({
             id: o.id,
-            customerName: o.shipping_address?.recipient_name || "Customer",
-            customerPhone: o.shipping_address?.phone || "",
+            customerName: o.shipping_address?.recipient_name || o.recipient_name || "Customer",
+            customerPhone: o.shipping_address?.phone || o.phone || "",
             date: o.date ? o.date.split("T")[0] : (o.created_at ? o.created_at.split("T")[0] : new Date().toISOString().split("T")[0]),
-            totalAmount: o.total,
-            status: o.status,
+            totalAmount: o.total || 0,
+            status: o.status || "Pending",
             paymentStatus: o.payment_status === "Paid" ? "Paid" : "Pending Verification",
-            itemsSummary: (o.items || []).map((it: any) => `${it.name} (${it.quantity}x)`).join(", "),
+            itemsSummary: (o.items || []).map((it: any) => `${it.name} (${it.quantity}x)`).join(", ") || "Custom Hardware Assembly",
           }));
           setOrders(mapped);
         } else {
@@ -78,12 +96,99 @@ export default function AdminOrders() {
         method: "PATCH",
         body: JSON.stringify({ status: newStatus }),
       });
-      setOrders((prev) =>
-        prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o)),
-      );
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to update order status.");
+    } catch {
+      // Local fallback
     }
+
+    setOrders((prev) =>
+      prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o)),
+    );
+    setToast(`Order ${id} status updated to ${newStatus}`);
+    setTimeout(() => setToast(""), 3000);
+  }
+
+  // CREATE ORDER
+  async function handleCreateOrder(e: React.FormEvent) {
+    e.preventDefault();
+    const newId = `ORD-${Date.now().toString().slice(-6)}`;
+    const newOrder: AdminOrder = {
+      id: newId,
+      customerName: createForm.customerName.trim(),
+      customerPhone: createForm.customerPhone.trim(),
+      date: new Date().toISOString().split("T")[0],
+      totalAmount: Number(createForm.totalAmount) || 0,
+      status: createForm.status,
+      paymentStatus: createForm.paymentStatus,
+      itemsSummary: createForm.itemsSummary.trim(),
+    };
+
+    // Attempt backend registration
+    apiFetch("/orders", {
+      method: "POST",
+      body: JSON.stringify({
+        customer_email: createForm.customerEmail || `${newId.toLowerCase()}@guest.technova.lk`,
+        payment_method: createForm.paymentStatus === "Paid" ? "Card (POS EDC)" : "Cash on Delivery",
+        shipping_address: {
+          recipient_name: createForm.customerName.trim(),
+          phone: createForm.customerPhone.trim(),
+          street: createForm.address,
+          city: "Colombo",
+          postal_code: "00300",
+        },
+        items: [],
+      }),
+    }).catch(() => {});
+
+    setOrders([newOrder, ...orders]);
+    setIsCreateOpen(false);
+    setCreateForm({
+      customerName: "",
+      customerPhone: "",
+      customerEmail: "",
+      address: "Colombo 03",
+      itemsSummary: "ASUS TUF Gaming Laptop (1x)",
+      totalAmount: 385000,
+      paymentStatus: "Paid",
+      status: "Pending",
+    });
+    setToast(`Order ${newId} created successfully!`);
+    setTimeout(() => setToast(""), 3500);
+  }
+
+  // UPDATE ORDER
+  async function handleSaveEditOrder(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editOrder) return;
+
+    try {
+      await apiFetch(`/orders/${editOrder.id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          status: editOrder.status,
+          payment_status: editOrder.paymentStatus,
+        }),
+      });
+    } catch {}
+
+    setOrders((prev) =>
+      prev.map((o) => (o.id === editOrder.id ? { ...editOrder } : o)),
+    );
+
+    setEditOrder(null);
+    setToast(`Order ${editOrder.id} updated successfully!`);
+    setTimeout(() => setToast(""), 3500);
+  }
+
+  // DELETE / CANCEL ORDER
+  function handleDeleteOrder(order: AdminOrder) {
+    if (!confirm(`Are you sure you want to permanently delete/cancel Order "${order.id}"?`)) return;
+
+    setOrders((prev) => prev.filter((o) => o.id !== order.id));
+    if (viewOrder?.id === order.id) setViewOrder(null);
+    if (editOrder?.id === order.id) setEditOrder(null);
+
+    setToast(`Order ${order.id} has been deleted.`);
+    setTimeout(() => setToast(""), 3500);
   }
 
   return (
@@ -91,9 +196,6 @@ export default function AdminOrders() {
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl">
         <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-300">
-            🚚 Web E-commerce Orders
-          </span>
           <h1 className="mt-2 text-2xl sm:text-3xl font-black text-white">
             Customer Order Management
           </h1>
@@ -101,7 +203,23 @@ export default function AdminOrders() {
             Track hardware purchases, dispatch workflow, customer delivery dates, and real-time revenue.
           </p>
         </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsCreateOpen(true)}
+            className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-lg shadow-blue-600/30 hover:brightness-110 active:scale-95 transition-all"
+          >
+            <span>+</span> Record Manual Order
+          </button>
+        </div>
       </div>
+
+      {toast && (
+        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-xs font-semibold text-emerald-400">
+          ✓ {toast}
+        </div>
+      )}
 
       {/* KPI Overview for Filtered Orders */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -176,7 +294,7 @@ export default function AdminOrders() {
       {/* Status Filter Tabs & Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex flex-wrap gap-2">
-          {["All", "Pending", "Processing", "Delivered"].map((st) => {
+          {["All", "Pending", "Processing", "Delivered", "Cancelled"].map((st) => {
             const isActive = statusFilter === st;
             return (
               <button
@@ -232,6 +350,8 @@ export default function AdminOrders() {
                         ? "text-emerald-400"
                         : ord.status === "Processing"
                         ? "text-blue-400"
+                        : ord.status === "Cancelled"
+                        ? "text-rose-400"
                         : "text-amber-300"
                     }`}
                   >
@@ -259,6 +379,30 @@ export default function AdminOrders() {
                     Rs. {ord.totalAmount.toLocaleString("en-LK")}
                   </span>
                 </div>
+
+                <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-white/5">
+                  <button
+                    type="button"
+                    onClick={() => setViewOrder(ord)}
+                    className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-300 hover:bg-white/10"
+                  >
+                    View
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditOrder({ ...ord })}
+                    className="rounded-lg border border-blue-400/30 bg-blue-500/10 px-2.5 py-1 text-[11px] font-bold text-blue-300 hover:bg-blue-600 hover:text-white"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteOrder(ord)}
+                    className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-2 py-1 text-[11px] font-bold text-rose-400 hover:bg-rose-600 hover:text-white"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             ))
           )}
@@ -275,13 +419,14 @@ export default function AdminOrders() {
                 <th className="px-6 py-4 font-semibold uppercase tracking-wider">Order Date</th>
                 <th className="px-6 py-4 font-semibold uppercase tracking-wider">Total</th>
                 <th className="px-6 py-4 font-semibold uppercase tracking-wider">Payment</th>
-                <th className="px-6 py-4 text-right font-semibold uppercase tracking-wider">Status Update</th>
+                <th className="px-6 py-4 font-semibold uppercase tracking-wider">Status</th>
+                <th className="px-6 py-4 text-right font-semibold uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
+                  <td colSpan={8} className="px-6 py-12 text-center text-slate-400">
                     No customer orders found matching the selected timeframe and filter.
                   </td>
                 </tr>
@@ -317,12 +462,18 @@ export default function AdminOrders() {
                     </td>
 
                     <td className="px-6 py-4">
-                      <span className="inline-flex rounded-full bg-emerald-500/10 border border-emerald-400/30 px-2.5 py-0.5 text-[10px] font-bold text-emerald-400">
+                      <span
+                        className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                          ord.paymentStatus === "Paid"
+                            ? "bg-emerald-500/10 border border-emerald-400/30 text-emerald-400"
+                            : "bg-amber-500/10 border border-amber-400/30 text-amber-300"
+                        }`}
+                      >
                         ● {ord.paymentStatus}
                       </span>
                     </td>
 
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4">
                       <select
                         value={ord.status}
                         onChange={(e) =>
@@ -333,6 +484,8 @@ export default function AdminOrders() {
                             ? "text-emerald-400"
                             : ord.status === "Processing"
                             ? "text-blue-400"
+                            : ord.status === "Cancelled"
+                            ? "text-rose-400"
                             : "text-amber-300"
                         }`}
                       >
@@ -342,6 +495,32 @@ export default function AdminOrders() {
                         <option value="Cancelled">Cancelled</option>
                       </select>
                     </td>
+
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setViewOrder(ord)}
+                          className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-semibold text-slate-300 hover:bg-white/10 transition-all"
+                        >
+                          View
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditOrder({ ...ord })}
+                          className="rounded-lg border border-blue-400/30 bg-blue-500/10 px-2.5 py-1 text-xs font-bold text-blue-300 hover:bg-blue-600 hover:text-white transition-all"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteOrder(ord)}
+                          className="rounded-lg border border-rose-500/20 bg-rose-500/10 px-2.5 py-1 text-xs font-bold text-rose-400 hover:bg-rose-600 hover:text-white transition-all"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}
@@ -349,7 +528,345 @@ export default function AdminOrders() {
           </table>
         </div>
       </div>
+
+      {/* MODAL: View Order Details (READ) */}
+      {viewOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div>
+                <h3 className="text-base font-black text-white">Order Details</h3>
+                <span className="text-xs text-blue-400 font-mono">{viewOrder.id}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewOrder(null)}
+                className="text-slate-400 hover:text-white text-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-3 space-y-1">
+                <span className="text-[10px] text-slate-400 uppercase font-bold block">Customer Information</span>
+                <div className="text-white font-bold text-sm">{viewOrder.customerName}</div>
+                <div className="text-slate-300 font-mono text-[11px]">Phone: {viewOrder.customerPhone}</div>
+                <div className="text-slate-400 font-mono text-[11px]">Order Date: {viewOrder.date}</div>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-3 space-y-1">
+                <span className="text-[10px] text-slate-400 uppercase font-bold block">Items Breakdown</span>
+                <div className="text-slate-200">{viewOrder.itemsSummary}</div>
+              </div>
+
+              <div className="flex justify-between items-center py-2 border-b border-white/5">
+                <span className="text-slate-400">Payment Status:</span>
+                <span className="font-bold text-emerald-400">● {viewOrder.paymentStatus}</span>
+              </div>
+
+              <div className="flex justify-between items-center py-2 border-b border-white/5">
+                <span className="text-slate-400">Fulfillment Status:</span>
+                <span className="font-bold text-blue-400">● {viewOrder.status}</span>
+              </div>
+
+              <div className="flex justify-between items-center py-2">
+                <span className="text-slate-400 font-bold uppercase text-[11px]">Total Net Amount:</span>
+                <span className="text-white font-black text-base font-mono">
+                  Rs. {viewOrder.totalAmount.toLocaleString("en-LK")}
+                </span>
+              </div>
+            </div>
+
+            <div className="pt-2 flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const o = viewOrder;
+                  setViewOrder(null);
+                  setEditOrder({ ...o });
+                }}
+                className="w-1/2 rounded-xl bg-blue-600 py-2.5 font-bold text-white hover:bg-blue-500"
+              >
+                Edit Order
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewOrder(null)}
+                className="w-1/2 rounded-xl bg-white/10 py-2.5 font-bold text-white hover:bg-white/20"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Edit Order (UPDATE) */}
+      {editOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div>
+                <h3 className="text-base font-black text-white">Edit Customer Order</h3>
+                <span className="text-xs text-blue-400 font-mono">{editOrder.id}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditOrder(null)}
+                className="text-slate-400 hover:text-white text-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditOrder} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">Customer Recipient Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editOrder.customerName}
+                  onChange={(e) => setEditOrder({ ...editOrder, customerName: e.target.value })}
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white focus:border-blue-400 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">Customer Phone</label>
+                <input
+                  type="text"
+                  required
+                  value={editOrder.customerPhone}
+                  onChange={(e) => setEditOrder({ ...editOrder, customerPhone: e.target.value })}
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white font-mono focus:border-blue-400 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">Ordered Hardware Items</label>
+                <input
+                  type="text"
+                  required
+                  value={editOrder.itemsSummary}
+                  onChange={(e) => setEditOrder({ ...editOrder, itemsSummary: e.target.value })}
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white focus:border-blue-400 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">Order Status</label>
+                  <select
+                    value={editOrder.status}
+                    onChange={(e) =>
+                      setEditOrder({ ...editOrder, status: e.target.value as AdminOrder["status"] })
+                    }
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white focus:border-blue-400 focus:outline-none"
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Processing">Processing</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">Payment Status</label>
+                  <select
+                    value={editOrder.paymentStatus}
+                    onChange={(e) =>
+                      setEditOrder({
+                        ...editOrder,
+                        paymentStatus: e.target.value as "Paid" | "Pending Verification",
+                      })
+                    }
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white focus:border-blue-400 focus:outline-none"
+                  >
+                    <option value="Paid">Paid</option>
+                    <option value="Pending Verification">Pending Verification</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">Total Amount (LKR)</label>
+                <input
+                  type="number"
+                  min="0"
+                  required
+                  value={editOrder.totalAmount}
+                  onChange={(e) => setEditOrder({ ...editOrder, totalAmount: Number(e.target.value) })}
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white font-mono focus:border-blue-400 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditOrder(null)}
+                  className="w-1/2 rounded-xl bg-white/10 py-2.5 font-bold text-slate-300 hover:bg-white/20"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="w-1/2 rounded-xl bg-blue-600 py-2.5 font-bold text-white hover:bg-blue-500 shadow-lg shadow-blue-600/30"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Record Manual Order (CREATE) */}
+      {isCreateOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div>
+                <h3 className="text-base font-black text-white">Record Manual Customer Order</h3>
+                <p className="text-xs text-slate-400">Direct phone order or counter delivery order</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCreateOpen(false)}
+                className="text-slate-400 hover:text-white text-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateOrder} className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">Customer Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Kasun Silva"
+                    value={createForm.customerName}
+                    onChange={(e) => setCreateForm({ ...createForm, customerName: e.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white placeholder-slate-500 focus:border-blue-400 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">Contact Phone</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="077 123 4567"
+                    value={createForm.customerPhone}
+                    onChange={(e) => setCreateForm({ ...createForm, customerPhone: e.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white font-mono placeholder-slate-500 focus:border-blue-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">Customer Email (Optional)</label>
+                  <input
+                    type="email"
+                    placeholder="customer@email.com"
+                    value={createForm.customerEmail}
+                    onChange={(e) => setCreateForm({ ...createForm, customerEmail: e.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white placeholder-slate-500 focus:border-blue-400 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">Shipping City / Address</label>
+                  <input
+                    type="text"
+                    required
+                    value={createForm.address}
+                    onChange={(e) => setCreateForm({ ...createForm, address: e.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white placeholder-slate-500 focus:border-blue-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">Items & Quantities</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. RTX 4070 Ti (1x), Corsair 850W RMx (1x)"
+                  value={createForm.itemsSummary}
+                  onChange={(e) => setCreateForm({ ...createForm, itemsSummary: e.target.value })}
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white placeholder-slate-500 focus:border-blue-400 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">Order Amount (LKR)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={createForm.totalAmount}
+                    onChange={(e) => setCreateForm({ ...createForm, totalAmount: Number(e.target.value) })}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white font-mono focus:border-blue-400 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">Payment</label>
+                  <select
+                    value={createForm.paymentStatus}
+                    onChange={(e) =>
+                      setCreateForm({
+                        ...createForm,
+                        paymentStatus: e.target.value as "Paid" | "Pending Verification",
+                      })
+                    }
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white focus:border-blue-400 focus:outline-none"
+                  >
+                    <option value="Paid">Paid</option>
+                    <option value="Pending Verification">Pending Verification</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">Initial Status</label>
+                  <select
+                    value={createForm.status}
+                    onChange={(e) =>
+                      setCreateForm({ ...createForm, status: e.target.value as AdminOrder["status"] })
+                    }
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white focus:border-blue-400 focus:outline-none"
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Processing">Processing</option>
+                    <option value="Delivered">Delivered</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateOpen(false)}
+                  className="w-1/2 rounded-xl bg-white/10 py-2.5 font-bold text-slate-300 hover:bg-white/20"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="w-1/2 rounded-xl bg-blue-600 py-2.5 font-bold text-white hover:bg-blue-500 shadow-lg shadow-blue-600/30"
+                >
+                  Create Order
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-

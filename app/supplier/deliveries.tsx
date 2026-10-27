@@ -68,7 +68,7 @@ export default function SupplierDeliveries() {
 
         <button
           onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-xs font-bold text-white hover:bg-blue-500 transition shadow-lg shadow-blue-600/30 shrink-0"
+          className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-3 text-xs font-extrabold text-white shadow-lg shadow-blue-600/30 hover:brightness-110 active:scale-95 transition-all shrink-0"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -87,7 +87,7 @@ export default function SupplierDeliveries() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs font-black text-cyan-300">
+                  <span className="font-mono text-xs font-black text-blue-300">
                     {dsp.dispatchNo}
                   </span>
                   <span className="text-slate-400 text-xs font-mono">
@@ -110,7 +110,7 @@ export default function SupplierDeliveries() {
                       : dsp.status === "In-Transit"
                       ? "bg-blue-500/20 text-blue-300 border-blue-500/30 animate-pulse"
                       : dsp.status === "Dispatched"
-                      ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
+                      ? "bg-blue-500/10 text-blue-300 border-blue-400/30"
                       : "bg-amber-500/20 text-amber-300 border-amber-500/30"
                   }`}
                 >
@@ -128,7 +128,7 @@ export default function SupplierDeliveries() {
                 <span className="font-semibold text-white mt-0.5 block truncate">
                   {dsp.carrier}
                 </span>
-                <span className="font-mono text-[11px] text-cyan-400 mt-0.5 block">
+                <span className="font-mono text-[11px] text-blue-400 mt-0.5 block">
                   Waybill: {dsp.trackingNumber}
                 </span>
               </div>
@@ -180,7 +180,7 @@ export default function SupplierDeliveries() {
                 <select
                   value={dsp.status}
                   onChange={(e) => updateStatus(dsp.id, e.target.value as any)}
-                  className="rounded-xl border border-white/10 bg-slate-800 px-3 py-1.5 text-xs font-bold text-white outline-none focus:border-cyan-400"
+                  className="rounded-xl border border-white/10 bg-slate-950 px-3 py-1.5 text-xs font-bold text-white outline-none focus:border-blue-400"
                 >
                   <option value="Preparing Dispatch">Preparing Dispatch</option>
                   <option value="Dispatched">Dispatched</option>
@@ -219,7 +219,7 @@ export default function SupplierDeliveries() {
                 <select
                   value={targetShop}
                   onChange={(e) => setTargetShop(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none"
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400"
                 >
                   {mockShopBranches.map((b) => (
                     <option key={b.id} value={b.name}>{b.name} ({b.city})</option>
@@ -234,7 +234,7 @@ export default function SupplierDeliveries() {
                 <select
                   value={carrier}
                   onChange={(e) => setCarrier(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none"
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400"
                 >
                   <option value="Nanotek Express Fleet Vehicle #WP-CAD-4412">Nanotek Express Fleet Vehicle #WP-CAD-4412</option>
                   <option value="Pronto Lanka Inter-City Courier">Pronto Lanka Inter-City Courier</option>
@@ -252,7 +252,7 @@ export default function SupplierDeliveries() {
                     min={1}
                     value={units}
                     onChange={(e) => setUnits(Number(e.target.value))}
-                    className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none font-mono"
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400 font-mono"
                   />
                 </div>
 
@@ -264,7 +264,7 @@ export default function SupplierDeliveries() {
                     type="number"
                     value={value}
                     onChange={(e) => setValue(Number(e.target.value))}
-                    className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none font-mono"
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400 font-mono"
                   />
                 </div>
               </div>
@@ -278,7 +278,7 @@ export default function SupplierDeliveries() {
                     type="text"
                     value={driverName}
                     onChange={(e) => setDriverName(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none"
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400"
                   />
                 </div>
 
@@ -290,7 +290,7 @@ export default function SupplierDeliveries() {
                     type="text"
                     value={driverPhone}
                     onChange={(e) => setDriverPhone(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none font-mono"
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400 font-mono"
                   />
                 </div>
               </div>
@@ -298,14 +298,14 @@ export default function SupplierDeliveries() {
               <div className="pt-2 flex gap-3">
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-blue-600 py-2.5 font-bold text-white hover:bg-blue-500 transition shadow"
+                  className="flex-1 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3 font-extrabold text-white shadow-lg shadow-blue-600/30 hover:brightness-110 active:scale-95 transition-all"
                 >
                   Generate Dispatch Note
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="rounded-xl border border-white/10 px-4 py-2.5 font-bold text-slate-300 hover:bg-white/5"
+                  className="rounded-2xl border border-white/10 px-5 py-3 font-bold text-slate-300 hover:bg-white/5 transition"
                 >
                   Cancel
                 </button>

@@ -40,30 +40,27 @@ export default function SupplierOverview({ onNavigate }: SupplierOverviewProps) 
   return (
     <div className="space-y-6">
       {/* Top Welcome / Distributor Banner */}
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-950/60 via-slate-900/80 to-slate-950 p-6 sm:p-8 backdrop-blur-xl shadow-2xl">
+      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900/40 p-6 sm:p-8 backdrop-blur-xl shadow-2xl">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-bold text-cyan-300">
-                <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-300">
+                <span className="h-2 w-2 rounded-full bg-blue-400 animate-pulse"></span>
                 Authorized Distributor Portal
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-300 font-mono">
-                {profile.vendorCode}
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
               {profile.companyName}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
-              Distributor Management for TECHNOVA retail branches. Manage shop wholesale inventory, fulfill store replenishment purchase orders, and audit customer warranty defect returns.
+            <p className="text-xs text-slate-300 max-w-xl">
+              Distributor ID: <strong className="text-white font-mono">{profile.vendorCode}</strong> • Direct wholesale inventory pipeline & fulfillment for TECHNOVA retail stores.
             </p>
           </div>
 
-          <div className="shrink-0 flex flex-col sm:row gap-3">
+          <div className="shrink-0 flex flex-col sm:flex-row gap-3">
             <button
               onClick={() => onNavigate("products")}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-600 to-blue-600 px-5 py-3.5 text-xs font-black text-white shadow-xl shadow-cyan-600/30 hover:from-cyan-500 hover:to-blue-500 transition active:scale-95"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-3.5 text-xs font-extrabold text-white shadow-xl shadow-blue-600/30 hover:brightness-110 active:scale-95 transition-all"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -73,7 +70,7 @@ export default function SupplierOverview({ onNavigate }: SupplierOverviewProps) 
 
             <button
               onClick={() => onNavigate("requests")}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3.5 text-xs font-bold text-slate-200 hover:bg-white/10 transition"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-slate-800/80 px-5 py-3.5 text-xs font-bold text-slate-200 hover:bg-white/10 transition"
             >
               <span>Restock Orders ({pendingRequests.length})</span>
             </button>
@@ -81,7 +78,7 @@ export default function SupplierOverview({ onNavigate }: SupplierOverviewProps) 
         </div>
 
         {/* Ambient glow */}
-        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-cyan-600/20 blur-3xl pointer-events-none" />
+        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-blue-600/15 blur-3xl pointer-events-none" />
       </div>
 
       {/* Critical Shop Low-Stock Warning Banner */}
@@ -117,11 +114,11 @@ export default function SupplierOverview({ onNavigate }: SupplierOverviewProps) 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div
           onClick={() => onNavigate("products")}
-          className="rounded-3xl border border-white/10 bg-slate-900/40 p-5 backdrop-blur-xl cursor-pointer hover:border-cyan-500/40 transition"
+          className="rounded-3xl border border-white/10 bg-slate-900/40 p-5 backdrop-blur-xl cursor-pointer hover:border-blue-500/40 transition"
         >
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span className="font-bold uppercase tracking-wider">Catalog SKUs</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400 font-bold">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 font-bold">
               📦
             </div>
           </div>
@@ -303,7 +300,7 @@ export default function SupplierOverview({ onNavigate }: SupplierOverviewProps) 
                 className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-2.5"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-bold text-cyan-300">
+                  <span className="font-mono text-xs font-bold text-blue-300">
                     {dsp.dispatchNo}
                   </span>
                   <span

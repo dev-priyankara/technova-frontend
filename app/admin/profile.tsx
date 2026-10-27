@@ -193,26 +193,13 @@ export default function AdminProfile({ onProfileUpdate }: AdminProfileProps) {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl">
+      <div className="">
         <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-300">
-            👤 Administrator Account
-          </span>
-          <h1 className="mt-2 text-2xl sm:text-3xl font-black text-white">
-            Admin Profile & Account Settings
-          </h1>
-          <p className="mt-1 text-xs text-slate-300">
-            Manage your personal registration details, administrator contact info, and profile avatar.
-          </p>
+         
         </div>
 
-        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 self-start sm:self-auto text-left sm:text-right">
-          <span className="text-[10px] text-emerald-400 font-bold uppercase block">
-            Access Role
-          </span>
-          <span className="text-xs font-black text-white">
-            {profile.role}
-          </span>
+        <div className="">
+         
         </div>
       </div>
 
@@ -307,27 +294,7 @@ export default function AdminProfile({ onProfileUpdate }: AdminProfileProps) {
           </div>
 
           {/* Quick Account Information Box */}
-          <div className="rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl space-y-3 text-xs">
-            <h3 className="font-bold text-white border-b border-white/10 pb-2.5">
-              Account Metadata
-            </h3>
-            <div className="flex items-center justify-between text-slate-300">
-              <span className="text-slate-400">Account ID:</span>
-              <span className="font-mono font-bold text-white">USR-ADM-01</span>
-            </div>
-            <div className="flex items-center justify-between text-slate-300">
-              <span className="text-slate-400">Member Since:</span>
-              <span className="font-mono text-slate-300">2025-01-10</span>
-            </div>
-            <div className="flex items-center justify-between text-slate-300">
-              <span className="text-slate-400">System Role:</span>
-              <span className="text-blue-300 font-bold">Master Operations</span>
-            </div>
-            <div className="flex items-center justify-between text-slate-300">
-              <span className="text-slate-400">Assigned Store:</span>
-              <span className="text-white font-semibold">TECHNOVA Flagship</span>
-            </div>
-          </div>
+         
         </div>
 
         {/* Right Column: Profile Edit & Security Forms (cols 8) */}

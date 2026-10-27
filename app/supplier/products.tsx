@@ -115,8 +115,8 @@ export default function SupplierProducts() {
   return (
     <div className="space-y-6">
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-950/90 px-4 py-3 text-xs font-bold text-white shadow-2xl backdrop-blur-xl">
-          <span className="flex h-2 w-2 rounded-full bg-cyan-400 animate-ping"></span>
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-2xl border border-blue-400/30 bg-blue-950/90 px-4 py-3 text-xs font-bold text-white shadow-2xl backdrop-blur-xl">
+          <span className="flex h-2 w-2 rounded-full bg-blue-400 animate-ping"></span>
           <span>{toastMessage}</span>
         </div>
       )}
@@ -124,7 +124,7 @@ export default function SupplierProducts() {
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl">
         <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-bold text-cyan-300">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-300">
             📦 Distributor Hardware Inventory
           </span>
           <h1 className="mt-2 text-2xl sm:text-3xl font-black text-white">
@@ -137,7 +137,7 @@ export default function SupplierProducts() {
 
         <button
           onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center gap-2 rounded-2xl bg-cyan-600 px-4 py-3 text-xs font-bold text-white hover:bg-cyan-500 transition shadow-lg shadow-cyan-600/30 shrink-0"
+          className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-3 text-xs font-extrabold text-white shadow-lg shadow-blue-600/30 hover:brightness-110 active:scale-95 transition-all shrink-0"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -159,7 +159,7 @@ export default function SupplierProducts() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search wholesale hardware by part name, SKU, or category..."
-            className="w-full rounded-2xl border border-white/10 bg-slate-900/60 pl-10 pr-4 py-3 text-xs text-white placeholder-slate-400 focus:border-cyan-500 outline-none backdrop-blur-xl"
+            className="w-full rounded-2xl border border-white/10 bg-slate-900/60 pl-10 pr-4 py-3 text-xs text-white placeholder-slate-400 focus:border-blue-400 outline-none backdrop-blur-xl"
           />
         </div>
 
@@ -168,10 +168,10 @@ export default function SupplierProducts() {
             <button
               key={b}
               onClick={() => setSelectedBrand(b)}
-              className={`shrink-0 rounded-xl px-3 py-1.5 text-xs font-bold transition border ${
+              className={`shrink-0 rounded-2xl px-4 py-2 text-xs font-bold transition-all ${
                 selectedBrand === b
-                  ? "border-cyan-400 bg-cyan-600 text-white"
-                  : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                  ? "bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-blue-400"
+                  : "border border-white/10 bg-slate-900/40 text-slate-300 hover:bg-white/10"
               }`}
             >
               {b}
@@ -182,7 +182,7 @@ export default function SupplierProducts() {
 
       {/* Wholesale Products Table */}
       <div className="rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl">
-        <div className="overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-white/10 text-slate-400">
@@ -201,7 +201,7 @@ export default function SupplierProducts() {
                 <tr key={prod.id} className="hover:bg-white/5 transition">
                   <td className="py-3 px-3 max-w-xs">
                     <div className="font-bold text-white text-xs">{prod.name}</div>
-                    <div className="text-[10px] text-cyan-400 font-semibold mt-0.5">
+                    <div className="text-[10px] text-blue-400 font-semibold mt-0.5">
                       {prod.brand}
                     </div>
                   </td>
@@ -232,7 +232,7 @@ export default function SupplierProducts() {
                   <td className="py-3 px-3 text-center">
                     <button
                       onClick={() => setDispatchModalProduct(prod)}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-cyan-600/30 border border-cyan-500/30 px-3 py-1.5 text-xs font-bold text-cyan-300 hover:bg-cyan-600 hover:text-white transition shadow"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600/20 border border-blue-500/30 px-3 py-1.5 text-xs font-bold text-blue-300 hover:bg-blue-600 hover:text-white transition shadow"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -244,6 +244,44 @@ export default function SupplierProducts() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Cards View */}
+        <div className="block md:hidden divide-y divide-white/5 space-y-3">
+          {filtered.map((prod) => (
+            <div key={prod.id} className="pt-3 first:pt-0 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h3 className="font-bold text-white text-xs">{prod.name}</h3>
+                  <div className="text-[10px] text-blue-400 font-semibold">{prod.brand} • {prod.category}</div>
+                </div>
+                <span
+                  className={`shrink-0 inline-block px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
+                    prod.availableStock <= 5
+                      ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                      : "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                  }`}
+                >
+                  {prod.availableStock} units
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-xs font-mono">
+                <span className="text-slate-400 text-[11px]">SKU: {prod.sku}</span>
+                <span className="font-bold text-emerald-400">Rs. {prod.wholesalePrice.toLocaleString("en-LK")}</span>
+              </div>
+
+              <div className="pt-1 flex items-center justify-between">
+                <span className="text-[10px] text-slate-400">{prod.warrantyPeriod}</span>
+                <button
+                  onClick={() => setDispatchModalProduct(prod)}
+                  className="inline-flex items-center gap-1 rounded-xl bg-blue-600/20 border border-blue-500/30 px-3 py-1 text-xs font-bold text-blue-300 hover:bg-blue-600 hover:text-white transition"
+                >
+                  <span>Dispatch</span>
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -276,7 +314,7 @@ export default function SupplierProducts() {
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="e.g. Corsair Dominator Platinum 32GB DDR5 6400MHz"
-                  className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none focus:border-cyan-400"
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400"
                 />
               </div>
 
@@ -288,7 +326,7 @@ export default function SupplierProducts() {
                   <select
                     value={newBrand}
                     onChange={(e) => setNewBrand(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none focus:border-cyan-400"
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400"
                   >
                     {brands.filter((b) => b !== "All").map((b) => (
                       <option key={b} value={b}>{b}</option>
@@ -303,7 +341,7 @@ export default function SupplierProducts() {
                   <select
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none focus:border-cyan-400"
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400"
                   >
                     <option value="Graphics Cards (GPUs)">Graphics Cards (GPUs)</option>
                     <option value="Processors (CPUs)">Processors (CPUs)</option>
@@ -328,7 +366,7 @@ export default function SupplierProducts() {
                     value={newSku}
                     onChange={(e) => setNewSku(e.target.value)}
                     placeholder="e.g. CMT32GX5M2B6400C32"
-                    className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none focus:border-cyan-400 font-mono"
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400 font-mono"
                   />
                 </div>
 
@@ -342,7 +380,7 @@ export default function SupplierProducts() {
                     value={newStock}
                     onChange={(e) => setNewStock(e.target.value === "" ? "" : Number(e.target.value))}
                     placeholder="e.g. 20"
-                    className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none focus:border-cyan-400 font-mono"
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400 font-mono"
                   />
                 </div>
               </div>
@@ -358,7 +396,7 @@ export default function SupplierProducts() {
                     value={newWholesale}
                     onChange={(e) => setNewWholesale(e.target.value === "" ? "" : Number(e.target.value))}
                     placeholder="e.g. 48000"
-                    className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none focus:border-cyan-400 font-mono"
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400 font-mono"
                   />
                 </div>
 
@@ -372,7 +410,7 @@ export default function SupplierProducts() {
                     value={newMsrp}
                     onChange={(e) => setNewMsrp(e.target.value === "" ? "" : Number(e.target.value))}
                     placeholder="e.g. 56000"
-                    className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none focus:border-cyan-400 font-mono"
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400 font-mono"
                   />
                 </div>
               </div>
@@ -386,7 +424,7 @@ export default function SupplierProducts() {
                     type="number"
                     value={newMoq}
                     onChange={(e) => setNewMoq(e.target.value === "" ? "" : Number(e.target.value))}
-                    className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none focus:border-cyan-400 font-mono"
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400 font-mono"
                   />
                 </div>
 
@@ -399,7 +437,7 @@ export default function SupplierProducts() {
                     value={newWarranty}
                     onChange={(e) => setNewWarranty(e.target.value)}
                     placeholder="e.g. 3 Years Distributor Warranty"
-                    className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none focus:border-cyan-400"
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400"
                   />
                 </div>
               </div>
@@ -407,14 +445,14 @@ export default function SupplierProducts() {
               <div className="pt-3 flex gap-3">
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-cyan-600 py-2.5 font-bold text-white hover:bg-cyan-500 transition shadow"
+                  className="flex-1 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3 font-extrabold text-white shadow-lg shadow-blue-600/30 hover:brightness-110 active:scale-95 transition-all"
                 >
                   Save to Wholesale Catalog
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="rounded-xl border border-white/10 px-4 py-2.5 font-bold text-slate-300 hover:bg-white/5"
+                  className="rounded-2xl border border-white/10 px-5 py-3 font-bold text-slate-300 hover:bg-white/5 transition"
                 >
                   Cancel
                 </button>
@@ -462,7 +500,7 @@ export default function SupplierProducts() {
                 <select
                   value={targetShop}
                   onChange={(e) => setTargetShop(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none focus:border-cyan-400"
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400"
                 >
                   {branches.map((b) => (
                     <option key={b.id} value={b.name}>
@@ -482,11 +520,11 @@ export default function SupplierProducts() {
                   max={dispatchModalProduct.availableStock}
                   value={dispatchQty}
                   onChange={(e) => setDispatchQty(Number(e.target.value))}
-                  className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none focus:border-cyan-400 font-mono"
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400 font-mono"
                 />
               </div>
 
-              <div className="rounded-xl border border-cyan-500/20 bg-cyan-950/20 p-3 flex justify-between items-center font-mono">
+              <div className="rounded-xl border border-blue-500/20 bg-blue-950/20 p-3 flex justify-between items-center font-mono">
                 <span className="text-slate-300">Total Supply Invoice:</span>
                 <span className="font-bold text-white text-sm">
                   Rs. {(dispatchQty * dispatchModalProduct.wholesalePrice).toLocaleString("en-LK")}
@@ -496,14 +534,14 @@ export default function SupplierProducts() {
               <div className="pt-2 flex gap-3">
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-cyan-600 py-2.5 font-bold text-white hover:bg-cyan-500 transition shadow"
+                  className="flex-1 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3 font-extrabold text-white shadow-lg shadow-blue-600/30 hover:brightness-110 active:scale-95 transition-all"
                 >
                   Confirm & Dispatch Stock
                 </button>
                 <button
                   type="button"
                   onClick={() => setDispatchModalProduct(null)}
-                  className="rounded-xl border border-white/10 px-4 py-2.5 font-bold text-slate-300 hover:bg-white/5"
+                  className="rounded-2xl border border-white/10 px-5 py-3 font-bold text-slate-300 hover:bg-white/5 transition"
                 >
                   Cancel
                 </button>

@@ -58,7 +58,7 @@ export default function CashierCustomers({ onNavigate }: CashierCustomersProps) 
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl">
         <div>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-300">
             👥 Walk-in Customer Directory
@@ -72,85 +72,140 @@ export default function CashierCustomers({ onNavigate }: CashierCustomersProps) 
         </div>
 
         <button
+          type="button"
           onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-3 text-xs font-bold text-white hover:bg-blue-500 transition shadow-lg shadow-blue-600/30 shrink-0"
+          className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-xs font-extrabold text-white shadow-lg shadow-blue-600/30 hover:brightness-110 active:scale-95 transition-all shrink-0 cursor-pointer"
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <span>+</span>
           <span>Register New Customer</span>
         </button>
       </div>
 
-      {/* Search Input */}
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+      {/* Search Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+          Registered Walk-in Clients ({filtered.length} found)
+        </span>
+
+        <div className="relative min-w-[280px]">
+          <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-xs">
+            🔍
+          </span>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by customer mobile number or name..."
+            className="w-full rounded-xl border border-white/10 bg-slate-900/60 py-2.5 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:border-blue-400 focus:outline-none"
+          />
         </div>
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by customer mobile number or name..."
-          className="w-full rounded-2xl border border-white/10 bg-slate-900/60 pl-10 pr-4 py-3 text-xs text-white placeholder-slate-400 focus:border-blue-500 outline-none backdrop-blur-xl"
-        />
       </div>
 
-      {/* Customer Cards / Table */}
-      <div className="rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl">
-        <div className="overflow-x-auto">
+      {/* Customer Cards / Table Container */}
+      <div className="overflow-hidden rounded-3xl border border-white/10 bg-slate-900/40 backdrop-blur-xl">
+        {/* Mobile View */}
+        <div className="block md:hidden divide-y divide-white/5 p-3 space-y-3">
+          {filtered.length === 0 ? (
+            <div className="p-8 text-center text-slate-400 text-xs">No walk-in customers found.</div>
+          ) : (
+            filtered.map((cust) => (
+              <div key={cust.id} className="pt-3 first:pt-0 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="font-bold text-white text-sm flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-xs">
+                      {cust.name.charAt(0)}
+                    </div>
+                    <span>{cust.name}</span>
+                  </div>
+                  <span className="font-mono font-bold text-emerald-400 text-xs">
+                    Rs. {cust.totalSpent.toLocaleString("en-LK")}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-slate-300">
+                  <span className="font-mono">{cust.phone}</span>
+                  <span>📍 {cust.city}</span>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 border-t border-white/5 text-[11px] text-slate-400">
+                  <span>{cust.totalVisits} visits • Last: {cust.lastPurchaseDate}</span>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate?.("pos")}
+                    className="rounded-lg border border-blue-400/30 bg-blue-500/10 px-2.5 py-1 text-[11px] font-bold text-blue-300 hover:bg-blue-600 hover:text-white transition-all cursor-pointer"
+                  >
+                    Bill Customer →
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-white/10 text-slate-400">
-                <th className="py-3 px-3">Customer Name</th>
-                <th className="py-3 px-3">Phone / Contact</th>
-                <th className="py-3 px-3">City / Area</th>
-                <th className="py-3 px-3 text-center">In-Store Visits</th>
-                <th className="py-3 px-3 text-right">Lifetime Volume</th>
-                <th className="py-3 px-3 text-center">Last Purchase</th>
-                <th className="py-3 px-3 text-center">Action</th>
+              <tr className="border-b border-white/10 bg-white/[0.02] text-slate-400 font-semibold uppercase tracking-wider">
+                <th className="py-4 px-6">Customer Name</th>
+                <th className="py-4 px-6">Phone / Contact</th>
+                <th className="py-4 px-6">City / Area</th>
+                <th className="py-4 px-6 text-center">In-Store Visits</th>
+                <th className="py-4 px-6 text-right">Lifetime Volume</th>
+                <th className="py-4 px-6 text-center">Last Purchase</th>
+                <th className="py-4 px-6 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {filtered.map((cust) => (
-                <tr key={cust.id} className="hover:bg-white/5 transition">
-                  <td className="py-3 px-3 font-bold text-white">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600/20 text-blue-300 font-bold text-xs">
-                        {cust.name.charAt(0)}
-                      </div>
-                      <span>{cust.name}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-3 font-mono text-slate-300">
-                    {cust.phone}
-                  </td>
-                  <td className="py-3 px-3 text-slate-400">
-                    {cust.city}
-                  </td>
-                  <td className="py-3 px-3 text-center">
-                    <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] font-bold text-white font-mono">
-                      {cust.totalVisits} visits
-                    </span>
-                  </td>
-                  <td className="py-3 px-3 text-right font-mono font-bold text-emerald-400">
-                    Rs. {cust.totalSpent.toLocaleString("en-LK")}
-                  </td>
-                  <td className="py-3 px-3 text-center text-slate-400 font-mono text-[11px]">
-                    {cust.lastPurchaseDate}
-                  </td>
-                  <td className="py-3 px-3 text-center">
-                    <button
-                      onClick={() => onNavigate?.("pos")}
-                      className="inline-flex items-center gap-1 rounded-xl bg-blue-600/30 border border-blue-500/30 px-3 py-1.5 text-xs font-bold text-blue-300 hover:bg-blue-600 hover:text-white transition"
-                    >
-                      Bill Customer
-                    </button>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                    No customers match your search query.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filtered.map((cust) => (
+                  <tr key={cust.id} className="hover:bg-white/[0.03] transition-colors">
+                    <td className="py-4 px-6 font-bold text-white">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600/20 text-blue-300 font-bold text-xs">
+                          {cust.name.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="font-bold text-white">{cust.name}</div>
+                          {cust.email && <div className="text-[10px] text-slate-400 font-normal">{cust.email}</div>}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6 font-mono text-slate-300">
+                      {cust.phone}
+                    </td>
+                    <td className="py-4 px-6 text-slate-300">
+                      {cust.city}
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      <span className="inline-flex rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[11px] font-bold text-white font-mono">
+                        {cust.totalVisits} visits
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 text-right font-mono font-black text-emerald-400 text-sm">
+                      Rs. {cust.totalSpent.toLocaleString("en-LK")}
+                    </td>
+                    <td className="py-4 px-6 text-center text-slate-300 font-mono text-[11px]">
+                      {cust.lastPurchaseDate}
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      <button
+                        type="button"
+                        onClick={() => onNavigate?.("pos")}
+                        className="rounded-lg border border-blue-400/30 bg-blue-500/10 px-3 py-1.5 text-xs font-bold text-blue-300 hover:bg-blue-600 hover:text-white transition-all cursor-pointer"
+                      >
+                        Bill Customer →
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -159,89 +214,89 @@ export default function CashierCustomers({ onNavigate }: CashierCustomersProps) 
       {/* Add Customer Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <h3 className="text-base font-extrabold text-white">
-                Add Walk-in Customer
-              </h3>
+              <div>
+                <h3 className="text-base font-black text-white">
+                  Add Walk-in Customer
+                </h3>
+                <p className="text-xs text-slate-400">Save client details for invoice and warranty</p>
+              </div>
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-white text-lg font-bold cursor-pointer"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                ✕
               </button>
             </div>
 
-            <form onSubmit={handleCreate} className="mt-4 space-y-4">
+            <form onSubmit={handleCreate} className="space-y-3 text-xs">
               <div>
-                <label className="block text-xs font-semibold text-slate-300">
-                  Full Name *
+                <label className="block text-slate-300 font-bold mb-1">
+                  Full Name <span className="text-rose-400">*</span>
                 </label>
                 <input
                   type="text"
                   required
+                  placeholder="e.g. Kasun Fernando"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Kasun Bandara"
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white focus:border-blue-400 outline-none"
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white placeholder-slate-500 focus:border-blue-400 focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300">
-                  Mobile Number *
+                <label className="block text-slate-300 font-bold mb-1">
+                  Phone Number <span className="text-rose-400">*</span>
                 </label>
                 <input
-                  type="text"
+                  type="tel"
                   required
+                  placeholder="e.g. 077 123 4567"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="e.g. 077 123 4567"
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white focus:border-blue-400 outline-none"
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white font-mono placeholder-slate-500 focus:border-blue-400 focus:outline-none"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300">
-                  Email (Optional - for e-invoices)
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="e.g. ruwan@gmail.com"
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white focus:border-blue-400 outline-none"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">City / Region</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Colombo 03"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white placeholder-slate-500 focus:border-blue-400 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">Email (Optional)</label>
+                  <input
+                    type="email"
+                    placeholder="client@mail.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white placeholder-slate-500 focus:border-blue-400 focus:outline-none"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300">
-                  City / Location
-                </label>
-                <input
-                  type="text"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder="e.g. Maharagama"
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white focus:border-blue-400 outline-none"
-                />
-              </div>
-
-              <div className="pt-2 flex gap-3">
-                <button
-                  type="submit"
-                  className="flex-1 rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white hover:bg-blue-500 transition"
-                >
-                  Save Customer
-                </button>
+              <div className="flex gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="rounded-xl border border-white/10 px-4 py-2.5 text-xs font-bold text-slate-300 hover:bg-white/5"
+                  className="w-1/2 rounded-xl bg-white/10 py-2.5 font-bold text-slate-300 hover:bg-white/20 transition-all cursor-pointer"
                 >
                   Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="w-1/2 rounded-xl bg-blue-600 py-2.5 font-bold text-white hover:bg-blue-500 shadow-lg shadow-blue-600/30 active:scale-95 transition-all cursor-pointer"
+                >
+                  Save Customer
                 </button>
               </div>
             </form>

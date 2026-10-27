@@ -69,7 +69,7 @@ export default function SupplierRequests() {
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl">
         <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-red-400/30 bg-red-500/10 px-3 py-1 text-xs font-bold text-red-300">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-300">
             📥 Store Owner Replenishment Demands
           </span>
           <h1 className="mt-2 text-2xl sm:text-3xl font-black text-white">
@@ -82,7 +82,7 @@ export default function SupplierRequests() {
 
         <button
           onClick={() => setShowSimulateModal(true)}
-          className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-red-600 to-amber-600 px-4 py-3 text-xs font-bold text-white hover:from-red-500 hover:to-amber-500 transition shadow-lg shadow-red-600/30 shrink-0"
+          className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-3 text-xs font-extrabold text-white shadow-lg shadow-blue-600/30 hover:brightness-110 active:scale-95 transition-all shrink-0"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -97,10 +97,10 @@ export default function SupplierRequests() {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition border ${
+            className={`rounded-2xl px-4 py-2 text-xs font-bold transition-all ${
               filter === f
-                ? "border-blue-400 bg-blue-600 text-white"
-                : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                ? "bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-blue-400"
+                : "border border-white/10 bg-slate-900/40 text-slate-300 hover:bg-white/10"
             }`}
           >
             {f === "All" ? "All Orders" : f}
@@ -163,55 +163,74 @@ export default function SupplierRequests() {
             </div>
 
             {/* Requested Items Table */}
-            <div className="overflow-x-auto rounded-2xl border border-white/5 bg-black/20 p-3">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-white/10 text-slate-400 text-[11px]">
-                    <th className="py-2 px-2">Hardware Product</th>
-                    <th className="py-2 px-2 font-mono">SKU</th>
-                    <th className="py-2 px-2 text-center">Shop Current Stock</th>
-                    <th className="py-2 px-2 text-center">Min Threshold</th>
-                    <th className="py-2 px-2 text-center">Requested Qty</th>
-                    <th className="py-2 px-2 text-right">Wholesale Unit</th>
-                    <th className="py-2 px-2 text-right">Total (LKR)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {req.items.map((it, idx) => (
-                    <tr key={idx}>
-                      <td className="py-2.5 px-2 font-bold text-white">
-                        {it.productName}
-                      </td>
-                      <td className="py-2.5 px-2 font-mono text-[11px] text-slate-400">
-                        {it.sku}
-                      </td>
-                      <td className="py-2.5 px-2 text-center">
-                        <span className={`px-2 py-0.5 rounded font-mono font-bold text-[10px] ${
-                          it.currentShopStock === 0
-                            ? "bg-red-500/20 text-red-400 border border-red-500/30"
-                            : "bg-amber-500/20 text-amber-300"
-                        }`}>
-                          {it.currentShopStock} units
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-2 text-center text-slate-400 font-mono">
-                        {it.minThreshold}
-                      </td>
-                      <td className="py-2.5 px-2 text-center">
-                        <span className="font-mono font-bold text-white bg-blue-500/20 px-2 py-0.5 rounded text-xs">
-                          {it.requestedQty} units
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-2 text-right font-mono text-slate-300">
-                        Rs. {it.wholesalePrice.toLocaleString("en-LK")}
-                      </td>
-                      <td className="py-2.5 px-2 text-right font-mono font-bold text-emerald-400">
-                        Rs. {it.lineTotal.toLocaleString("en-LK")}
-                      </td>
+            <div className="rounded-2xl border border-white/5 bg-black/20 p-3">
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-white/10 text-slate-400 text-[11px]">
+                      <th className="py-2 px-2">Hardware Product</th>
+                      <th className="py-2 px-2 font-mono">SKU</th>
+                      <th className="py-2 px-2 text-center">Shop Current Stock</th>
+                      <th className="py-2 px-2 text-center">Min Threshold</th>
+                      <th className="py-2 px-2 text-center">Requested Qty</th>
+                      <th className="py-2 px-2 text-right">Wholesale Unit</th>
+                      <th className="py-2 px-2 text-right">Total (LKR)</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {req.items.map((it, idx) => (
+                      <tr key={idx}>
+                        <td className="py-2.5 px-2 font-bold text-white">
+                          {it.productName}
+                        </td>
+                        <td className="py-2.5 px-2 font-mono text-[11px] text-slate-400">
+                          {it.sku}
+                        </td>
+                        <td className="py-2.5 px-2 text-center">
+                          <span className={`px-2 py-0.5 rounded font-mono font-bold text-[10px] ${
+                            it.currentShopStock === 0
+                              ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                              : "bg-amber-500/20 text-amber-300"
+                          }`}>
+                            {it.currentShopStock} units
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-2 text-center text-slate-400 font-mono">
+                          {it.minThreshold}
+                        </td>
+                        <td className="py-2.5 px-2 text-center">
+                          <span className="font-mono font-bold text-white bg-blue-500/20 px-2 py-0.5 rounded text-xs">
+                            {it.requestedQty} units
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-2 text-right font-mono text-slate-300">
+                          Rs. {it.wholesalePrice.toLocaleString("en-LK")}
+                        </td>
+                        <td className="py-2.5 px-2 text-right font-mono font-bold text-emerald-400">
+                          Rs. {it.lineTotal.toLocaleString("en-LK")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile item view */}
+              <div className="block sm:hidden divide-y divide-white/5 space-y-2">
+                {req.items.map((it, idx) => (
+                  <div key={idx} className="pt-2 first:pt-0 space-y-1 text-xs">
+                    <div className="font-bold text-white">{it.productName}</div>
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                      <span>{it.sku}</span>
+                      <span className="text-blue-300 font-bold">{it.requestedQty} units</span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] font-mono">
+                      <span className="text-amber-400">Current Stock: {it.currentShopStock}</span>
+                      <span className="font-bold text-emerald-400">Rs. {it.lineTotal.toLocaleString("en-LK")}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Shop Notes & Actions */}
@@ -289,7 +308,7 @@ export default function SupplierRequests() {
                 <select
                   value={simBranch}
                   onChange={(e) => setSimBranch(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none"
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400"
                 >
                   {mockShopBranches.map((b) => (
                     <option key={b.id} value={b.name}>{b.name}</option>
@@ -307,7 +326,7 @@ export default function SupplierRequests() {
                     const p = mockSupplierProducts.find((x) => x.id === e.target.value);
                     if (p) setSimProduct(p);
                   }}
-                  className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none"
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400"
                 >
                   {mockSupplierProducts.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -327,7 +346,7 @@ export default function SupplierRequests() {
                     min={1}
                     value={simQty}
                     onChange={(e) => setSimQty(Number(e.target.value))}
-                    className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none font-mono"
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400 font-mono"
                   />
                 </div>
 
@@ -338,7 +357,7 @@ export default function SupplierRequests() {
                   <select
                     value={simUrgency}
                     onChange={(e) => setSimUrgency(e.target.value as any)}
-                    className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none"
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400"
                   >
                     <option value="Critical (Out of Stock)">Critical (Out of Stock)</option>
                     <option value="High (Low Stock)">High (Low Stock)</option>
@@ -356,21 +375,21 @@ export default function SupplierRequests() {
                   value={simNotes}
                   onChange={(e) => setSimNotes(e.target.value)}
                   placeholder="e.g. Need restock before Friday weekend sales..."
-                  className="w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-white outline-none"
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400"
                 />
               </div>
 
               <div className="pt-2 flex gap-3">
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-red-600 py-2.5 font-bold text-white hover:bg-red-500 transition shadow"
+                  className="flex-1 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3 font-extrabold text-white shadow-lg shadow-blue-600/30 hover:brightness-110 active:scale-95 transition-all"
                 >
                   Submit Replenishment Order
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowSimulateModal(false)}
-                  className="rounded-xl border border-white/10 px-4 py-2.5 font-bold text-slate-300 hover:bg-white/5"
+                  className="rounded-2xl border border-white/10 px-5 py-3 font-bold text-slate-300 hover:bg-white/5 transition"
                 >
                   Cancel
                 </button>

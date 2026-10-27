@@ -336,27 +336,82 @@ export default function POSBillingCounter() {
       )}
 
       {/* Top Walk-in Customer Header & Fast Action Bar */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 rounded-3xl border border-white/10 bg-slate-900/40 p-4 sm:p-5 backdrop-blur-xl">
-        {/* Customer Selector */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400 font-bold">
+      <div className="flex flex-col gap-4">
+        {/* Section Title Banner */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl">
+          <div>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-300">
+              ⚡ Live Billing Counter
+            </span>
+            <h1 className="mt-2 text-2xl sm:text-3xl font-black text-white">
+              POS Hardware Register
+            </h1>
+            <p className="mt-1 text-xs text-slate-300">
+              Scan barcodes, search inventory, manage customer tenders, and apply instant 2% bulk discounts on orders over LKR 400,000.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {heldCart ? (
+              <button
+                onClick={resumeHeldCart}
+                className="inline-flex items-center gap-1.5 rounded-2xl border border-amber-500/40 bg-amber-500/20 px-4 py-2.5 text-xs font-bold text-amber-300 hover:bg-amber-500/30 transition animate-pulse"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                </svg>
+                <span>Resume Held Sale ({heldCart.length})</span>
+              </button>
+            ) : (
+              cart.length > 0 && (
+                <button
+                  onClick={holdCurrentCart}
+                  className="inline-flex items-center gap-1.5 rounded-2xl border border-white/10 bg-slate-800/80 px-4 py-2.5 text-xs font-semibold text-slate-300 hover:bg-white/10 transition"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Hold Sale</span>
+                </button>
+              )
+            )}
+
+            {/* Mobile Cart Floating Badge Toggle */}
+            <button
+              onClick={() => setMobileCartOpen(true)}
+              className="lg:hidden flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-lg shadow-blue-600/30"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span>Cart ({cart.reduce((s, i) => s + i.qty, 0)})</span>
+              <span className="font-mono font-black text-amber-300">
+                Rs. {finalAmount.toLocaleString("en-LK")}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Customer Select Bar */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 rounded-2xl border border-white/10 bg-slate-900/40 p-4 backdrop-blur-xl">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400 font-bold border border-blue-500/30">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
             <div>
-              <span className="text-[10px] uppercase font-bold text-slate-300 block">
+              <span className="text-[10px] uppercase font-extrabold text-slate-400 block tracking-wider">
                 Walk-in Customer
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mt-0.5">
                 <select
                   value={selectedCustomer.id}
                   onChange={(e) => {
                     const found = customers.find((c) => c.id === e.target.value);
                     if (found) setSelectedCustomer(found);
                   }}
-                  className="rounded-lg border border-white/10 bg-slate-800 px-3 py-1.5 text-xs font-bold text-white focus:border-blue-400 outline-none"
+                  className="rounded-xl border border-white/10 bg-slate-950 px-3 py-1.5 text-xs font-bold text-white focus:border-blue-400 outline-none"
                 >
                   {customers.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -366,58 +421,23 @@ export default function POSBillingCounter() {
                 </select>
                 <button
                   onClick={() => setShowAddCustomerModal(true)}
-                  className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-bold text-blue-300 hover:bg-white/10 transition"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-blue-400/30 bg-blue-500/10 px-3 py-1.5 text-xs font-bold text-blue-300 hover:bg-blue-500/20 transition"
                   title="Register new customer"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
-                  <span>New</span>
+                  <span>New Customer</span>
                 </button>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Status / Hold Sales Controls */}
-        <div className="flex items-center gap-3 justify-between lg:justify-end">
-          {heldCart ? (
-            <button
-              onClick={resumeHeldCart}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/20 px-3 py-2 text-xs font-bold text-amber-300 hover:bg-amber-500/30 transition animate-pulse"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-              </svg>
-              <span>Resume Held Sale ({heldCart.length} items)</span>
-            </button>
-          ) : (
-            cart.length > 0 && (
-              <button
-                onClick={holdCurrentCart}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/10 transition"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>Hold Sale</span>
-              </button>
-            )
-          )}
-
-          {/* Mobile Cart Floating Badge Toggle */}
-          <button
-            onClick={() => setMobileCartOpen(true)}
-            className="lg:hidden flex items-center gap-2 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-lg shadow-blue-600/30"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            <span>Cart ({cart.reduce((s, i) => s + i.qty, 0)})</span>
-            <span className="font-mono font-black text-amber-300">
-              Rs. {finalAmount.toLocaleString("en-LK")}
-            </span>
-          </button>
+          <div className="text-right text-xs text-slate-400">
+            <span>Terminal: <strong className="text-white font-mono">POS-01</strong></span>
+            <span className="mx-2">•</span>
+            <span>Date: <strong className="text-slate-200">{new Date().toISOString().split("T")[0]}</strong></span>
+          </div>
         </div>
       </div>
 
@@ -457,10 +477,10 @@ export default function POSBillingCounter() {
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`shrink-0 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                className={`shrink-0 rounded-2xl px-4 py-2 text-xs font-bold transition-all ${
                   selectedCategory === cat
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
-                    : "border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white"
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-blue-400"
+                    : "border border-white/10 bg-slate-900/40 text-slate-300 hover:bg-white/10"
                 }`}
               >
                 {cat}
@@ -565,7 +585,7 @@ export default function POSBillingCounter() {
                     ) : (
                       <button
                         onClick={() => addToCart(prod)}
-                        className="inline-flex items-center gap-1 rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-500 transition shadow-md shadow-blue-600/20 active:scale-95"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-3.5 py-1.5 text-xs font-extrabold text-white hover:brightness-110 transition shadow-md shadow-blue-600/25 active:scale-95"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -905,7 +925,7 @@ export default function POSBillingCounter() {
       {/* Add Walk-in Customer Modal */}
       {showAddCustomerModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <h3 className="text-base font-extrabold text-white">
                 Register Walk-in Customer
@@ -931,7 +951,7 @@ export default function POSBillingCounter() {
                   value={newCustName}
                   onChange={(e) => setNewCustName(e.target.value)}
                   placeholder="e.g. Kasun Bandara"
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white focus:border-blue-400 outline-none"
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-xs text-white focus:border-blue-400 outline-none"
                 />
               </div>
 
@@ -945,7 +965,7 @@ export default function POSBillingCounter() {
                   value={newCustPhone}
                   onChange={(e) => setNewCustPhone(e.target.value)}
                   placeholder="e.g. 077 123 4567"
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white focus:border-blue-400 outline-none"
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-xs text-white focus:border-blue-400 outline-none"
                 />
               </div>
 
@@ -958,21 +978,21 @@ export default function POSBillingCounter() {
                   value={newCustCity}
                   onChange={(e) => setNewCustCity(e.target.value)}
                   placeholder="e.g. Nugegoda"
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white focus:border-blue-400 outline-none"
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-xs text-white focus:border-blue-400 outline-none"
                 />
               </div>
 
               <div className="pt-2 flex gap-3">
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white hover:bg-blue-500 transition"
+                  className="flex-1 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3 text-xs font-extrabold text-white shadow-lg shadow-blue-600/30 hover:brightness-110 active:scale-95 transition-all"
                 >
                   Save & Select Customer
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowAddCustomerModal(false)}
-                  className="rounded-xl border border-white/10 px-4 py-2.5 text-xs font-bold text-slate-300 hover:bg-white/5"
+                  className="rounded-2xl border border-white/10 px-5 py-3 text-xs font-bold text-slate-300 hover:bg-white/5 transition"
                 >
                   Cancel
                 </button>

@@ -21,119 +21,81 @@ export default function CashierOverview({ onNavigate }: CashierOverviewProps) {
   return (
     <div className="space-y-6">
       {/* Top Welcome / Register Active Hero Card */}
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-blue-950/60 via-slate-900/80 to-slate-950 p-6 sm:p-8 backdrop-blur-xl shadow-2xl">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-300">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                Register Open & Active
-              </span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-300 font-mono">
-                {shift.registerId}
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
-              POS Cashier Dashboard
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
-              Welcome, <span className="text-white font-bold">{shift.cashierName}</span>. Your register is ready for customer walk-in billing, price checks, and receipt generation.
-            </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-300">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              Register Open & Active
+            </span>
+            <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-300 font-mono">
+              {shift.registerId}
+            </span>
           </div>
-
-          {/* Primary Quick Launch POS Button */}
-          <div className="shrink-0">
-            <button
-              onClick={() => onNavigate("pos")}
-              className="inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 text-sm font-black text-white shadow-xl shadow-blue-600/40 hover:from-blue-500 hover:to-indigo-500 transition active:scale-95 group text-left"
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/20 group-hover:scale-110 transition">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-              </div>
-              <div>
-                <span className="block text-xs uppercase tracking-wider text-blue-200">
-                  Walk-in Retail Sale
-                </span>
-                <span className="text-base font-extrabold">Open POS Counter</span>
-              </div>
-            </button>
-          </div>
+          <h1 className="mt-2 text-2xl sm:text-3xl font-black text-white">
+            POS Cashier Dashboard
+          </h1>
+          <p className="mt-1 text-xs text-slate-300">
+            Welcome back, <span className="text-white font-bold">{shift.cashierName}</span>. Your register is ready for customer walk-in billing, price checks, and receipt generation.
+          </p>
         </div>
 
-        {/* Ambient background blur */}
-        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-blue-600/20 blur-3xl pointer-events-none" />
+        {/* Primary Quick Launch POS Button */}
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => onNavigate("pos")}
+            className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-3 text-xs font-extrabold text-white shadow-lg shadow-blue-600/30 hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+          >
+            <span>⚡</span>
+            <span>Open POS Counter</span>
+          </button>
+        </div>
       </div>
 
       {/* Shift Financial Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Total Today's Sales */}
-        <div className="rounded-3xl border border-white/10 bg-slate-900/40 p-5 backdrop-blur-xl">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-bold uppercase tracking-wider">Today&apos;s Gross Sales</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 font-bold">
-              Rs
-            </div>
-          </div>
-          <div className="mt-3 font-mono text-2xl font-black text-white">
+        <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-4 backdrop-blur-xl">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Today&apos;s Gross Sales</div>
+          <div className="mt-1.5 text-xl sm:text-2xl font-black text-white font-mono">
             Rs. {shift.totalSales.toLocaleString("en-LK")}
           </div>
-          <div className="mt-1 flex items-center gap-1.5 text-xs text-emerald-400">
-            <span>+{shift.transactionCount} Walk-in Receipts Issued</span>
+          <div className="text-[10px] text-emerald-400 mt-0.5">
+            +{shift.transactionCount} Walk-in Receipts
           </div>
         </div>
 
         {/* Cash In Drawer */}
-        <div className="rounded-3xl border border-white/10 bg-slate-900/40 p-5 backdrop-blur-xl">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-bold uppercase tracking-wider">Cash in Drawer</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 font-bold">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-          </div>
-          <div className="mt-3 font-mono text-2xl font-black text-white">
+        <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-4 backdrop-blur-xl">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Cash in Drawer</div>
+          <div className="mt-1.5 text-xl sm:text-2xl font-black text-emerald-400 font-mono">
             Rs. {shift.expectedCashInDrawer.toLocaleString("en-LK")}
           </div>
-          <div className="mt-1 flex items-center justify-between text-[11px] text-slate-400">
-            <span>Float: Rs. {shift.openingFloat.toLocaleString("en-LK")}</span>
-            <span className="text-emerald-400">Cash: Rs. {shift.cashSales.toLocaleString("en-LK")}</span>
+          <div className="text-[10px] text-slate-400 mt-0.5">
+            Float: Rs. {shift.openingFloat.toLocaleString("en-LK")}
           </div>
         </div>
 
         {/* 2% Discounts Issued */}
-        <div className="rounded-3xl border border-white/10 bg-slate-900/40 p-5 backdrop-blur-xl">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-bold uppercase tracking-wider">2% Volume Discounts</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 font-bold">
-              %
-            </div>
-          </div>
-          <div className="mt-3 font-mono text-2xl font-black text-white">
+        <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-4 backdrop-blur-xl">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">2% Volume Discounts</div>
+          <div className="mt-1.5 text-xl sm:text-2xl font-black text-blue-400 font-mono">
             Rs. {shift.discountsTotal.toLocaleString("en-LK")}
           </div>
-          <div className="mt-1 text-xs text-purple-300">
-            <span>Auto Applied (&gt; LKR 400k)</span>
+          <div className="text-[10px] text-blue-300 mt-0.5">
+            Auto Applied (&gt; 400k LKR)
           </div>
         </div>
 
         {/* Card & Bank Collections */}
-        <div className="rounded-3xl border border-white/10 bg-slate-900/40 p-5 backdrop-blur-xl">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-bold uppercase tracking-wider">Card / EDC Terminals</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 font-bold">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-              </svg>
-            </div>
-          </div>
-          <div className="mt-3 font-mono text-2xl font-black text-white">
+        <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-4 backdrop-blur-xl">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Card / EDC Terminals</div>
+          <div className="mt-1.5 text-xl sm:text-2xl font-black text-white font-mono">
             Rs. {(shift.cardSales + shift.bankTransferSales).toLocaleString("en-LK")}
           </div>
-          <div className="mt-1 text-xs text-slate-400">
-            <span>Card: {shift.cardSales.toLocaleString("en-LK")} | Bank: {shift.bankTransferSales.toLocaleString("en-LK")}</span>
+          <div className="text-[10px] text-slate-400 mt-0.5">
+            Card + Bank Settlement
           </div>
         </div>
       </div>
@@ -141,16 +103,20 @@ export default function CashierOverview({ onNavigate }: CashierOverviewProps) {
       {/* Quick Access Action Shortcuts */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <button
+          type="button"
           onClick={() => onNavigate("pos")}
-          className="rounded-2xl border border-white/10 bg-white/5 p-4 hover:border-blue-500/40 hover:bg-white/10 transition flex items-center gap-3 text-left group"
+          className="rounded-2xl border border-white/10 bg-slate-900/40 p-4 hover:border-blue-500/40 hover:bg-white/[0.06] transition-all flex items-center gap-3 text-left group cursor-pointer"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400 group-hover:scale-110 transition">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400 group-hover:scale-110 transition-transform">
+            <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <rect width="18" height="18" x="3" y="3" rx="2" />
+              <path d="M7 8h10" />
+              <path d="M7 12h10" />
+              <path d="M7 16h6" />
             </svg>
           </div>
           <div>
-            <span className="text-xs font-bold text-white block group-hover:text-blue-300 transition">
+            <span className="text-xs font-bold text-white block group-hover:text-blue-300 transition-colors">
               POS Terminal
             </span>
             <span className="text-[10px] text-slate-400">Bill Walk-in Customer</span>
@@ -158,16 +124,18 @@ export default function CashierOverview({ onNavigate }: CashierOverviewProps) {
         </button>
 
         <button
+          type="button"
           onClick={() => onNavigate("products")}
-          className="rounded-2xl border border-white/10 bg-white/5 p-4 hover:border-blue-500/40 hover:bg-white/10 transition flex items-center gap-3 text-left group"
+          className="rounded-2xl border border-white/10 bg-slate-900/40 p-4 hover:border-blue-500/40 hover:bg-white/[0.06] transition-all flex items-center gap-3 text-left group cursor-pointer"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600/20 text-emerald-400 group-hover:scale-110 transition">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400 group-hover:scale-110 transition-transform">
+            <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" x2="16.65" y1="21" y2="16.65" />
             </svg>
           </div>
           <div>
-            <span className="text-xs font-bold text-white block group-hover:text-emerald-300 transition">
+            <span className="text-xs font-bold text-white block group-hover:text-blue-300 transition-colors">
               Price Checker
             </span>
             <span className="text-[10px] text-slate-400">Stock & Specs Lookup</span>
@@ -175,16 +143,19 @@ export default function CashierOverview({ onNavigate }: CashierOverviewProps) {
         </button>
 
         <button
+          type="button"
           onClick={() => onNavigate("transactions")}
-          className="rounded-2xl border border-white/10 bg-white/5 p-4 hover:border-blue-500/40 hover:bg-white/10 transition flex items-center gap-3 text-left group"
+          className="rounded-2xl border border-white/10 bg-slate-900/40 p-4 hover:border-blue-500/40 hover:bg-white/[0.06] transition-all flex items-center gap-3 text-left group cursor-pointer"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-600/20 text-purple-400 group-hover:scale-110 transition">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400 group-hover:scale-110 transition-transform">
+            <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" x2="8" y1="13" y2="13" />
             </svg>
           </div>
           <div>
-            <span className="text-xs font-bold text-white block group-hover:text-purple-300 transition">
+            <span className="text-xs font-bold text-white block group-hover:text-blue-300 transition-colors">
               Past Receipts
             </span>
             <span className="text-[10px] text-slate-400">Reprint 80mm Invoice</span>
@@ -192,16 +163,18 @@ export default function CashierOverview({ onNavigate }: CashierOverviewProps) {
         </button>
 
         <button
+          type="button"
           onClick={() => onNavigate("shift")}
-          className="rounded-2xl border border-white/10 bg-white/5 p-4 hover:border-blue-500/40 hover:bg-white/10 transition flex items-center gap-3 text-left group"
+          className="rounded-2xl border border-white/10 bg-slate-900/40 p-4 hover:border-blue-500/40 hover:bg-white/[0.06] transition-all flex items-center gap-3 text-left group cursor-pointer"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-600/20 text-amber-400 group-hover:scale-110 transition">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/20 text-blue-400 group-hover:scale-110 transition-transform">
+            <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <line x1="12" x2="12" y1="2" y2="22" />
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
             </svg>
           </div>
           <div>
-            <span className="text-xs font-bold text-white block group-hover:text-amber-300 transition">
+            <span className="text-xs font-bold text-white block group-hover:text-blue-300 transition-colors">
               Cash Drawer
             </span>
             <span className="text-[10px] text-slate-400">Shift Reconciliation</span>
@@ -209,78 +182,119 @@ export default function CashierOverview({ onNavigate }: CashierOverviewProps) {
         </button>
       </div>
 
-      {/* Today's Recent Completed POS Sales Table */}
-      <div className="rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+      {/* Today's Recent Completed POS Sales Container */}
+      <div className="overflow-hidden rounded-3xl border border-white/10 bg-slate-900/40 backdrop-blur-xl">
+        <div className="p-6 border-b border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h2 className="text-lg font-black text-white">
+            <h2 className="text-base font-extrabold text-white">
               Today&apos;s Completed POS Bills
             </h2>
             <p className="text-xs text-slate-400">
-              Recent counter transactions settled by this register. Click any bill to reprint the 80mm thermal receipt.
+              Recent counter transactions settled by this register. Click any bill to reprint the thermal slip.
             </p>
           </div>
           <button
+            type="button"
             onClick={() => onNavigate("transactions")}
-            className="text-xs font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1"
+            className="text-xs font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 cursor-pointer"
           >
-            <span>View All Transactions</span>
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+            <span>View All Transactions →</span>
           </button>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile View */}
+        <div className="block md:hidden divide-y divide-white/5 p-3 space-y-3">
+          {transactions.map((tx) => (
+            <div key={tx.id} className="pt-3 first:pt-0 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-mono font-bold text-sm text-blue-300">{tx.receiptNo}</span>
+                <span className="font-mono font-black text-white text-sm">
+                  Rs. {tx.finalAmount.toLocaleString("en-LK")}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-slate-300">
+                <span>Customer: <strong>{tx.customerName}</strong></span>
+                <span className="font-mono text-slate-400 text-[11px]">{tx.time}</span>
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] text-slate-400">
+                <span>Subtotal: Rs. {tx.subtotal.toLocaleString("en-LK")}</span>
+                {tx.discount > 0 && (
+                  <span className="text-emerald-400 font-bold font-mono">
+                    2% Off: -Rs. {tx.discount.toLocaleString("en-LK")}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between pt-1 border-t border-white/5">
+                <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-300">
+                  {tx.paymentMethod}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedReceipt(tx)}
+                  className="rounded-lg border border-blue-400/30 bg-blue-500/10 px-2.5 py-1 text-[11px] font-bold text-blue-300 hover:bg-blue-600 hover:text-white transition-all cursor-pointer"
+                >
+                  Reprint Slip
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-white/10 text-slate-400">
-                <th className="py-3 px-3">Receipt No</th>
-                <th className="py-3 px-3">Time</th>
-                <th className="py-3 px-3">Customer</th>
-                <th className="py-3 px-3">Method</th>
-                <th className="py-3 px-3 text-right">Subtotal</th>
-                <th className="py-3 px-3 text-right">2% Discount</th>
-                <th className="py-3 px-3 text-right">Final Amount</th>
-                <th className="py-3 px-3 text-center">Receipt</th>
+              <tr className="border-b border-white/10 bg-white/[0.02] text-slate-400 font-semibold uppercase tracking-wider">
+                <th className="py-4 px-6">Receipt No</th>
+                <th className="py-4 px-6">Time</th>
+                <th className="py-4 px-6">Customer</th>
+                <th className="py-4 px-6">Payment Method</th>
+                <th className="py-4 px-6 text-right">Subtotal</th>
+                <th className="py-4 px-6 text-right">2% Discount</th>
+                <th className="py-4 px-6 text-right">Final Net</th>
+                <th className="py-4 px-6 text-right">Receipt</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {transactions.map((tx) => (
-                <tr key={tx.id} className="hover:bg-white/5 transition">
-                  <td className="py-3 px-3 font-mono font-bold text-blue-300">
+                <tr key={tx.id} className="hover:bg-white/[0.03] transition-colors">
+                  <td className="py-4 px-6 font-mono font-bold text-blue-300">
                     {tx.receiptNo}
                   </td>
-                  <td className="py-3 px-3 text-slate-400 font-mono">
+                  <td className="py-4 px-6 text-slate-300 font-mono text-[11px]">
                     {tx.time}
                   </td>
-                  <td className="py-3 px-3 font-medium text-white">
+                  <td className="py-4 px-6 font-medium text-white">
                     {tx.customerName}
                   </td>
-                  <td className="py-3 px-3">
+                  <td className="py-4 px-6">
                     <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-300">
                       {tx.paymentMethod}
                     </span>
                   </td>
-                  <td className="py-3 px-3 text-right font-mono text-slate-400">
+                  <td className="py-4 px-6 text-right font-mono text-slate-300">
                     Rs. {tx.subtotal.toLocaleString("en-LK")}
                   </td>
-                  <td className="py-3 px-3 text-right font-mono">
+                  <td className="py-4 px-6 text-right font-mono">
                     {tx.discount > 0 ? (
                       <span className="text-emerald-400 font-bold">
-                        - Rs. {tx.discount.toLocaleString("en-LK")}
+                        -Rs. {tx.discount.toLocaleString("en-LK")}
                       </span>
                     ) : (
-                      <span className="text-slate-400">-</span>
+                      <span className="text-slate-500 font-mono">—</span>
                     )}
                   </td>
-                  <td className="py-3 px-3 text-right font-mono font-black text-white">
+                  <td className="py-4 px-6 text-right font-mono font-black text-white text-sm">
                     Rs. {tx.finalAmount.toLocaleString("en-LK")}
                   </td>
-                  <td className="py-3 px-3 text-center">
+                  <td className="py-4 px-6 text-right">
                     <button
+                      type="button"
                       onClick={() => setSelectedReceipt(tx)}
-                      className="rounded-lg bg-blue-600/30 border border-blue-500/30 px-2.5 py-1 text-[11px] font-bold text-blue-300 hover:bg-blue-600 hover:text-white transition"
+                      className="rounded-lg border border-blue-400/30 bg-blue-500/10 px-3 py-1.5 text-xs font-bold text-blue-300 hover:bg-blue-600 hover:text-white transition-all cursor-pointer"
                     >
                       Reprint
                     </button>

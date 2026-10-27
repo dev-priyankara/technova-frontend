@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import CashierSidebar, { type CashierSection } from "./sidebar";
@@ -10,11 +10,44 @@ import CashierTransactionsPage from "./transactions";
 import CashierProducts from "./products";
 import CashierCustomers from "./customers";
 import CashierShiftPage from "./shift";
+import CashierProfile, { getStoredCashierProfile } from "./profile";
 
 export default function CashierPage() {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState<CashierSection>("overview");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cashierName, setCashierName] = useState("Nimal Perera");
+  const [cashierAvatar, setCashierAvatar] = useState("");
+
+  useEffect(() => {
+    function loadProfile() {
+      const stored = getStoredCashierProfile();
+      if (stored) {
+        setCashierName(stored.name || "Nimal Perera");
+        setCashierAvatar(stored.avatarUrl || "");
+      }
+    }
+    loadProfile();
+
+    function handleUpdate(e: any) {
+      if (e.detail) {
+        setCashierName(e.detail.name || "Nimal Perera");
+        setCashierAvatar(e.detail.avatarUrl || "");
+      }
+    }
+    window.addEventListener("cashier_profile_updated", handleUpdate);
+    return () => {
+      window.removeEventListener("cashier_profile_updated", handleUpdate);
+    };
+  }, []);
+
+  function getInitials(nameStr: string): string {
+    const parts = nameStr.trim().split(" ");
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return (nameStr.slice(0, 2) || "NP").toUpperCase();
+  }
 
   function handleLogout() {
     router.push("/login");
@@ -63,9 +96,18 @@ export default function CashierPage() {
             >
               Store
             </Link>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-[11px] font-black text-white">
-              NP
-            </div>
+            <button
+              type="button"
+              onClick={() => handleSelectSection("profile")}
+              className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-[11px] font-black text-white overflow-hidden shadow-md"
+              title="Cashier Profile"
+            >
+              {cashierAvatar ? (
+                <img src={cashierAvatar} alt={cashierName} className="h-full w-full object-cover" />
+              ) : (
+                getInitials(cashierName)
+              )}
+            </button>
           </div>
         </header>
 
@@ -84,6 +126,7 @@ export default function CashierPage() {
             <CashierCustomers onNavigate={(sec) => handleSelectSection(sec)} />
           )}
           {activeSection === "shift" && <CashierShiftPage />}
+          {activeSection === "profile" && <CashierProfile />}
         </main>
       </div>
     </div>

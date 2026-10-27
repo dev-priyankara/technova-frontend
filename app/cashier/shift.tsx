@@ -29,7 +29,7 @@ export default function CashierShiftPage() {
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl">
         <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-300">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-300">
             💼 Cash Register & Drawer Settlement
           </span>
           <h1 className="mt-2 text-2xl sm:text-3xl font-black text-white">
@@ -155,7 +155,7 @@ export default function CashierShiftPage() {
                     setActualCash(e.target.value === "" ? "" : Number(e.target.value))
                   }
                   placeholder="Enter physical cash in register..."
-                  className="mt-1.5 w-full rounded-2xl border border-white/10 bg-slate-800 px-4 py-3 text-sm font-mono text-white focus:border-blue-400 outline-none disabled:opacity-50"
+                  className="mt-1.5 w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-sm font-mono text-white focus:border-blue-400 outline-none disabled:opacity-50"
                 />
               </div>
 
@@ -196,7 +196,7 @@ export default function CashierShiftPage() {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="e.g. All 8 physical bills audited. Cash drawer balanced."
-                  className="mt-1.5 w-full rounded-2xl border border-white/10 bg-slate-800 p-3 text-xs text-white focus:border-blue-400 outline-none disabled:opacity-50 resize-none"
+                  className="mt-1.5 w-full rounded-2xl border border-white/10 bg-slate-950 p-3.5 text-xs text-white focus:border-blue-400 outline-none disabled:opacity-50 resize-none"
                 />
               </div>
 
@@ -207,7 +207,7 @@ export default function CashierShiftPage() {
               ) : (
                 <button
                   onClick={handleCloseShift}
-                  className="w-full rounded-2xl bg-gradient-to-r from-amber-600 to-amber-500 py-3.5 text-xs font-bold text-white shadow-xl shadow-amber-600/30 hover:from-amber-500 hover:to-amber-400 transition"
+                  className="w-full rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3.5 text-xs font-extrabold text-white shadow-xl shadow-blue-600/30 hover:brightness-110 active:scale-95 transition-all"
                 >
                   Reconcile & Close Shift
                 </button>

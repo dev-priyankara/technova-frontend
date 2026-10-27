@@ -32,7 +32,7 @@ export default function CashierTransactionsPage() {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl">
         <div>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1 text-xs font-bold text-blue-300">
             🧾 POS Sales History & Reprint
@@ -63,120 +63,166 @@ export default function CashierTransactionsPage() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        {/* Payment Method Tabs */}
+        <div className="flex flex-wrap gap-2">
+          {["All", "Cash", "Card", "Bank"].map((m) => {
+            const isActive = methodFilter === m;
+            return (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMethodFilter(m)}
+                className={`rounded-xl px-4 py-2 text-xs font-bold transition-all cursor-pointer ${
+                  isActive
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-blue-400"
+                    : "border border-white/10 bg-slate-900/40 text-slate-300 hover:bg-white/10"
+                }`}
+              >
+                {m === "All" ? "All Payments" : m}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Search Input */}
+        <div className="relative min-w-[280px]">
+          <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-xs">
+            🔍
+          </span>
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by receipt number (e.g. INV-POS-2025), customer name, or phone..."
-            className="w-full rounded-2xl border border-white/10 bg-slate-900/60 pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-400 focus:border-blue-500 outline-none backdrop-blur-xl"
+            placeholder="Search receipt no, customer, phone..."
+            className="w-full rounded-xl border border-white/10 bg-slate-900/60 py-2.5 pl-9 pr-3 text-xs text-white placeholder-slate-500 focus:border-blue-400 focus:outline-none"
           />
-        </div>
-
-        <div className="flex items-center gap-2">
-          {["All", "Cash", "Card", "Bank"].map((m) => (
-            <button
-              key={m}
-              onClick={() => setMethodFilter(m)}
-              className={`rounded-xl px-3 py-2 text-xs font-bold transition border ${
-                methodFilter === m
-                  ? "border-blue-400 bg-blue-600 text-white"
-                  : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
-              }`}
-            >
-              {m}
-            </button>
-          ))}
         </div>
       </div>
 
-      {/* Transactions Table */}
-      <div className="rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl">
-        <div className="overflow-x-auto">
+      {/* Transactions Container */}
+      <div className="overflow-hidden rounded-3xl border border-white/10 bg-slate-900/40 backdrop-blur-xl">
+        {/* Mobile View */}
+        <div className="block md:hidden divide-y divide-white/5 p-3 space-y-3">
+          {filtered.length === 0 ? (
+            <div className="p-8 text-center text-slate-400 text-xs">
+              No transactions match your search criteria.
+            </div>
+          ) : (
+            filtered.map((tx) => (
+              <div key={tx.id} className="pt-3 first:pt-0 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono font-bold text-sm text-blue-300">{tx.receiptNo}</span>
+                  <span className="font-mono font-black text-white text-sm">
+                    Rs. {tx.finalAmount.toLocaleString("en-LK")}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-slate-300">
+                  <span>Customer: <strong>{tx.customerName}</strong></span>
+                  <span className="font-mono text-slate-400 text-[11px]">{tx.date} {tx.time}</span>
+                </div>
+
+                <div className="text-[11px] text-slate-400">
+                  {tx.items?.length || 0} hardware item(s) • Subtotal: Rs. {tx.subtotal.toLocaleString("en-LK")}
+                </div>
+
+                {tx.discount > 0 && (
+                  <div className="text-[11px] text-emerald-400 font-bold font-mono">
+                    2% Bulk Discount Saved: -Rs. {tx.discount.toLocaleString("en-LK")}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between pt-1 border-t border-white/5">
+                  <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-300">
+                    {tx.paymentMethod}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedReceipt(tx)}
+                    className="rounded-lg border border-blue-400/30 bg-blue-500/10 px-2.5 py-1 text-[11px] font-bold text-blue-300 hover:bg-blue-600 hover:text-white transition-all cursor-pointer"
+                  >
+                    Reprint Slip
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-white/10 text-slate-400">
-                <th className="py-3 px-3">Receipt No</th>
-                <th className="py-3 px-3">Date / Time</th>
-                <th className="py-3 px-3">Customer</th>
-                <th className="py-3 px-3">Items</th>
-                <th className="py-3 px-3">Payment</th>
-                <th className="py-3 px-3 text-right">Subtotal</th>
-                <th className="py-3 px-3 text-right">2% Discount</th>
-                <th className="py-3 px-3 text-right">Final Amount</th>
-                <th className="py-3 px-3 text-center">Action</th>
+              <tr className="border-b border-white/10 bg-white/[0.02] text-slate-400 font-semibold uppercase tracking-wider">
+                <th className="py-4 px-6">Receipt No</th>
+                <th className="py-4 px-6">Date & Time</th>
+                <th className="py-4 px-6">Customer Name</th>
+                <th className="py-4 px-6">Payment Method</th>
+                <th className="py-4 px-6 text-right">Gross Subtotal</th>
+                <th className="py-4 px-6 text-right">2% Discount</th>
+                <th className="py-4 px-6 text-right">Final Amount</th>
+                <th className="py-4 px-6 text-right">Invoice Slip</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {filtered.map((tx) => (
-                <tr key={tx.id} className="hover:bg-white/5 transition">
-                  <td className="py-3 px-3 font-mono font-bold text-blue-300">
-                    {tx.receiptNo}
-                  </td>
-                  <td className="py-3 px-3 text-slate-400">
-                    <div>{tx.date}</div>
-                    <div className="font-mono text-[10px]">{tx.time}</div>
-                  </td>
-                  <td className="py-3 px-3 font-medium text-white">
-                    <div>{tx.customerName}</div>
-                    <div className="text-[10px] text-slate-400">{tx.customerPhone}</div>
-                  </td>
-                  <td className="py-3 px-3">
-                    <span className="rounded-md bg-white/5 border border-white/10 px-2 py-0.5 text-[10px] text-slate-300 font-mono">
-                      {tx.items.length} item{tx.items.length > 1 ? "s" : ""}
-                    </span>
-                  </td>
-                  <td className="py-3 px-3">
-                    <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-300">
-                      {tx.paymentMethod}
-                    </span>
-                  </td>
-                  <td className="py-3 px-3 text-right font-mono text-slate-400">
-                    Rs. {tx.subtotal.toLocaleString("en-LK")}
-                  </td>
-                  <td className="py-3 px-3 text-right font-mono">
-                    {tx.discount > 0 ? (
-                      <span className="text-emerald-400 font-bold">
-                        - Rs. {tx.discount.toLocaleString("en-LK")}
-                      </span>
-                    ) : (
-                      <span className="text-slate-400">-</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-3 text-right font-mono font-black text-white">
-                    Rs. {tx.finalAmount.toLocaleString("en-LK")}
-                  </td>
-                  <td className="py-3 px-3 text-center">
-                    <button
-                      onClick={() => setSelectedReceipt(tx)}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600/30 border border-blue-500/30 px-3 py-1.5 text-xs font-bold text-blue-300 hover:bg-blue-600 hover:text-white transition shadow"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                      </svg>
-                      <span>Reprint</span>
-                    </button>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                    No transactions match your search criteria.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filtered.map((tx) => (
+                  <tr key={tx.id} className="hover:bg-white/[0.03] transition-colors">
+                    <td className="py-4 px-6 font-mono font-bold text-blue-300">
+                      {tx.receiptNo}
+                    </td>
+                    <td className="py-4 px-6 text-slate-300 font-mono text-[11px]">
+                      {tx.date} {tx.time}
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="font-bold text-white">{tx.customerName}</div>
+                      <div className="text-[11px] text-slate-400 font-mono">{tx.customerPhone}</div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-300">
+                        {tx.paymentMethod}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 text-right font-mono text-slate-300">
+                      Rs. {tx.subtotal.toLocaleString("en-LK")}
+                    </td>
+                    <td className="py-4 px-6 text-right font-mono">
+                      {tx.discount > 0 ? (
+                        <span className="text-emerald-400 font-bold">
+                          -Rs. {tx.discount.toLocaleString("en-LK")}
+                        </span>
+                      ) : (
+                        <span className="text-slate-500 font-mono">—</span>
+                      )}
+                    </td>
+                    <td className="py-4 px-6 text-right font-mono font-black text-white text-sm">
+                      Rs. {tx.finalAmount.toLocaleString("en-LK")}
+                    </td>
+                    <td className="py-4 px-6 text-right">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedReceipt(tx)}
+                        className="rounded-lg border border-blue-400/30 bg-blue-500/10 px-3 py-1.5 text-xs font-bold text-blue-300 hover:bg-blue-600 hover:text-white transition-all cursor-pointer"
+                      >
+                        Reprint Slip
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
-
-        {filtered.length === 0 && (
-          <div className="py-12 text-center text-slate-400">
-            <p className="text-sm font-semibold">No transactions match your search query.</p>
-          </div>
-        )}
       </div>
 
-      {/* 80mm Printable Receipt Modal */}
+      {/* Printable Receipt Modal */}
       <ReceiptModal
         transaction={selectedReceipt}
         onClose={() => setSelectedReceipt(null)}
@@ -184,4 +230,3 @@ export default function CashierTransactionsPage() {
     </div>
   );
 }
-

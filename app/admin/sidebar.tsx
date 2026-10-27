@@ -390,12 +390,7 @@ export default function AdminSidebar({
                 </div>
               </button>
 
-              <Link
-                href="/"
-                className="block w-full rounded-xl bg-white/5 border border-white/10 py-2.5 text-xs font-bold text-slate-300 text-center"
-              >
-                ← Back to Store
-              </Link>
+            
               <button
                 type="button"
                 onClick={onLogout}
