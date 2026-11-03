@@ -1,13 +1,25 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { mockAdminCustomers, type AdminCustomer } from "@/lib/adminData";
+import { type AdminCustomer } from "@/lib/adminData";
 import { apiFetch } from "@/lib/auth";
 
+interface CustomerApi {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+  city: string | null;
+  orders_count: number;
+  total_spent: number;
+  created_at: string;
+}
+
 export default function AdminCustomers() {
-  const [customers, setCustomers] = useState<AdminCustomer[]>(mockAdminCustomers);
+  const [customers, setCustomers] = useState<AdminCustomer[]>([]);
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState("");
+  const [loadError, setLoadError] = useState("");
 
   // Modals
   const [viewCustomer, setViewCustomer] = useState<AdminCustomer | null>(null);
@@ -20,36 +32,32 @@ export default function AdminCustomers() {
     email: "",
     phone: "",
     city: "Colombo",
-    totalSpent: 0,
-    ordersCount: 0,
+    tempPassword: "",
   });
 
   useEffect(() => {
     let isMounted = true;
-    apiFetch<any[]>("/users")
+    apiFetch<CustomerApi[]>("/customers")
       .then((data) => {
-        if (!isMounted || !Array.isArray(data) || data.length === 0) return;
-        // Map customers from users endpoint
-        const custs = data
-          .filter((u) => u.role === "Customer" || !u.role || u.role_id === 1)
-          .map((u, idx) => ({
-            id: u.id,
+        if (!isMounted) return;
+        const custs = data.map((u) => ({
+            id: String(u.id),
             name: u.name,
             email: u.email,
-            phone: u.phone || "—",
-            city: u.city || "Colombo",
-            ordersCount: u.ordersCount || 1,
-            totalSpent: u.totalSpent || 125000,
-            joinedDate: u.created_at ? u.created_at.split("T")[0] : `2026-0${(idx % 9) + 1}-10`,
+            phone: u.phone || "",
+            city: u.city || "",
+            ordersCount: Number(u.orders_count || 0),
+            totalSpent: Number(u.total_spent || 0),
+            joinedDate: u.created_at ? u.created_at.split("T")[0] : "",
           }));
-
-        if (custs.length > 0) {
-          // Merge with mock customers so table is populated
-          setCustomers(custs);
-        }
+        setCustomers(custs);
+        setLoadError("");
       })
-      .catch(() => {
-        // Fallback to mock customers
+      .catch((err) => {
+        if (isMounted) {
+          setCustomers([]);
+          setLoadError(err instanceof Error ? err.message : "Could not load customers.");
+        }
       });
     return () => {
       isMounted = false;
@@ -69,24 +77,37 @@ export default function AdminCustomers() {
   const totalOrdersPlaced = customers.reduce((acc, c) => acc + c.ordersCount, 0);
 
   // CREATE
-  function handleAddCustomer(e: React.FormEvent) {
+  async function handleAddCustomer(e: React.FormEvent) {
     e.preventDefault();
-    const newCust: AdminCustomer = {
-      id: `cust-${Date.now()}`,
-      name: addForm.name.trim(),
-      email: addForm.email.trim(),
-      phone: addForm.phone.trim(),
-      city: addForm.city.trim(),
-      ordersCount: Number(addForm.ordersCount) || 0,
-      totalSpent: Number(addForm.totalSpent) || 0,
-      joinedDate: new Date().toISOString().split("T")[0],
-    };
-
-    setCustomers([newCust, ...customers]);
-    setIsAddOpen(false);
-    setAddForm({ name: "", email: "", phone: "", city: "Colombo", totalSpent: 0, ordersCount: 0 });
-    setToast(`Customer "${newCust.name}" registered successfully!`);
-    setTimeout(() => setToast(""), 3500);
+    try {
+      const created = await apiFetch<CustomerApi>("/customers", {
+        method: "POST",
+        body: JSON.stringify({
+          name: addForm.name.trim(),
+          email: addForm.email.trim(),
+          phone: addForm.phone.trim(),
+          city: addForm.city.trim(),
+          tempPassword: addForm.tempPassword,
+        }),
+      });
+      const newCust: AdminCustomer = {
+        id: String(created.id),
+        name: created.name,
+        email: created.email,
+        phone: created.phone || "",
+        city: created.city || "",
+        ordersCount: Number(created.orders_count || 0),
+        totalSpent: Number(created.total_spent || 0),
+        joinedDate: created.created_at.split("T")[0],
+      };
+      setCustomers((current) => [newCust, ...current]);
+      setIsAddOpen(false);
+      setAddForm({ name: "", email: "", phone: "", city: "Colombo", tempPassword: "" });
+      setToast(`Customer "${newCust.name}" registered successfully!`);
+      setTimeout(() => setToast(""), 3500);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to create customer.");
+    }
   }
 
   // UPDATE
@@ -94,30 +115,35 @@ export default function AdminCustomers() {
     e.preventDefault();
     if (!editCustomer) return;
 
-    // Call API in background if it corresponds to user id
     apiFetch(`/users/${editCustomer.id}`, {
       method: "PATCH",
       body: JSON.stringify({
         name: editCustomer.name,
         email: editCustomer.email,
         phone: editCustomer.phone,
+        city: editCustomer.city,
       }),
-    }).catch(() => {});
-
-    setCustomers((prev) =>
-      prev.map((c) => (c.id === editCustomer.id ? { ...editCustomer } : c)),
-    );
-
-    setToast(`Customer "${editCustomer.name}" updated successfully!`);
-    setEditCustomer(null);
-    setTimeout(() => setToast(""), 3500);
+    }).then(() => {
+      setCustomers((prev) =>
+        prev.map((c) => (c.id === editCustomer.id ? { ...editCustomer } : c)),
+      );
+      setToast(`Customer "${editCustomer.name}" updated successfully!`);
+      setEditCustomer(null);
+      setTimeout(() => setToast(""), 3500);
+    }).catch((err) => {
+      alert(err instanceof Error ? err.message : "Failed to update customer.");
+    });
   }
 
   // DELETE
-  function handleDeleteCustomer(customer: AdminCustomer) {
+  async function handleDeleteCustomer(customer: AdminCustomer) {
     if (!confirm(`Are you sure you want to remove customer account "${customer.name}"?`)) return;
-
-    apiFetch(`/users/${customer.id}`, { method: "DELETE" }).catch(() => {});
+    try {
+      await apiFetch(`/users/${customer.id}`, { method: "DELETE" });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete customer.");
+      return;
+    }
 
     setCustomers((prev) => prev.filter((c) => c.id !== customer.id));
     if (viewCustomer?.id === customer.id) setViewCustomer(null);
@@ -154,6 +180,11 @@ export default function AdminCustomers() {
       {toast && (
         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-xs font-semibold text-emerald-400">
           ✓ {toast}
+        </div>
+      )}
+      {loadError && (
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300">
+          Could not load customers: {loadError}
         </div>
       )}
 
@@ -573,28 +604,16 @@ export default function AdminCustomers() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-300 font-bold mb-1">Initial Orders Count</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={addForm.ordersCount}
-                    onChange={(e) => setAddForm({ ...addForm, ordersCount: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white font-mono focus:border-blue-400 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-300 font-bold mb-1">Lifetime Spend (LKR)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={addForm.totalSpent}
-                    onChange={(e) => setAddForm({ ...addForm, totalSpent: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white font-mono focus:border-blue-400 focus:outline-none"
-                  />
-                </div>
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">Temporary Password (minimum 8 characters)</label>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  value={addForm.tempPassword}
+                  onChange={(e) => setAddForm({ ...addForm, tempPassword: e.target.value })}
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white focus:border-blue-400 focus:outline-none"
+                />
               </div>
 
               <div className="flex gap-2 pt-2">

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { mockAdminProducts, type AdminProduct } from "@/lib/adminData";
+import { type AdminProduct } from "@/lib/adminData";
 import { apiFetch } from "@/lib/auth";
 
 interface StockAuditRecord {
@@ -15,12 +15,39 @@ interface StockAuditRecord {
   timestamp: string;
 }
 
+interface InventoryProductApi {
+  id: number;
+  name: string;
+  category?: string;
+  category_name: string;
+  sku: string;
+  cost_price: number;
+  price: number;
+  selling_price?: number;
+  stock_count: number;
+  stock_qty?: number;
+  min_stock_level: number;
+  specs: string[] | null;
+}
+
+interface InventoryTransactionApi {
+  id: number;
+  product_id: number;
+  product_name: string;
+  sku: string;
+  change: number;
+  resulting_stock: number;
+  reason: string;
+  created_at: string;
+}
+
 export default function AdminInventory() {
-  const [products, setProducts] = useState<AdminProduct[]>(mockAdminProducts);
+  const [products, setProducts] = useState<AdminProduct[]>([]);
   const [filter, setFilter] = useState<string>("All");
   const [search, setSearch] = useState<string>("");
   const [toast, setToast] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   // Modals state
   const [auditModalProduct, setAuditModalProduct] = useState<AdminProduct | null>(null);
@@ -46,44 +73,26 @@ export default function AdminInventory() {
   });
 
   // Audit Logs History
-  const [auditLogs, setAuditLogs] = useState<StockAuditRecord[]>([
-    {
-      id: "log-1",
-      productId: "prod-1",
-      productName: "RTX 4090 Gaming OC 24GB",
-      sku: "GPU-NV-4090",
-      change: +4,
-      resultingStock: 12,
-      reason: "Direct air freight replenishment batch",
-      timestamp: new Date(Date.now() - 3600000 * 4).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    },
-    {
-      id: "log-2",
-      productId: "prod-3",
-      productName: "Kingston Fury Beast 32GB RGB",
-      sku: "RAM-KF-32G",
-      change: -2,
-      resultingStock: 2,
-      reason: "Display bench allocation & testing",
-      timestamp: new Date(Date.now() - 3600000 * 18).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    },
-  ]);
+  const [auditLogs, setAuditLogs] = useState<StockAuditRecord[]>([]);
 
   useEffect(() => {
     let isMounted = true;
-    apiFetch<any[]>("/products")
-      .then((data) => {
-        if (!isMounted || !Array.isArray(data) || data.length === 0) return;
+    Promise.all([
+      apiFetch<InventoryProductApi[]>("/products"),
+      apiFetch<InventoryTransactionApi[]>("/admin/inventory/transactions"),
+    ])
+      .then(([data, logs]) => {
+        if (!isMounted) return;
         const mapped: AdminProduct[] = data.map((p) => ({
-          id: p.id,
+          id: String(p.id),
           name: p.name,
-          category: p.category_name || (typeof p.category === "string" ? p.category : p.category?.name) || "Hardware",
+          category: p.category_name || p.category || "Hardware",
           sku: p.sku || `SKU-${p.id}`,
           costPrice: p.cost_price || Math.round((p.price || 0) * 0.82),
           sellingPrice: p.price || p.selling_price || 0,
           stockQty: p.stock_count ?? p.stock_qty ?? 0,
           minStockLevel: p.min_stock_level ?? 5,
-          specs: p.specs || "",
+          specs: Array.isArray(p.specs) ? p.specs.join(", ") : p.specs || "",
           status:
             (p.stock_count ?? 0) === 0
               ? "Out of Stock"
@@ -92,9 +101,27 @@ export default function AdminInventory() {
               : "In Stock",
         }));
         setProducts(mapped);
+        setAuditLogs(logs.map((log) => ({
+          id: String(log.id),
+          productId: String(log.product_id),
+          productName: log.product_name,
+          sku: log.sku,
+          change: Number(log.change),
+          resultingStock: Number(log.resulting_stock),
+          reason: log.reason,
+          timestamp: new Date(log.created_at).toLocaleString(),
+        })));
+        setLoadError("");
       })
       .catch((err) => {
-        console.warn("Using offline mock products for inventory tracking:", err);
+        if (isMounted) {
+          setProducts([]);
+          setAuditLogs([]);
+          setLoadError(err instanceof Error ? err.message : "Could not load inventory data.");
+        }
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
       });
     return () => {
       isMounted = false;
@@ -125,34 +152,33 @@ export default function AdminInventory() {
   async function handleQuickStockChange(id: string, delta: number) {
     const target = products.find((p) => p.id === id);
     if (!target) return;
-    const newQty = Math.max(0, target.stockQty + delta);
-    const newStatus =
-      newQty <= 0 ? "Out of Stock" : newQty <= target.minStockLevel ? "Low Stock" : "In Stock";
-
-    setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, stockQty: newQty, status: newStatus } : p)),
-    );
-
-    // Call backend API in background
-    apiFetch(`/products/${id}/stock?stock_delta=${delta}`, { method: "PATCH" }).catch(() => {});
-
-    // Add log
-    setAuditLogs((prev) => [
-      {
-        id: `log-${Date.now()}`,
-        productId: id,
-        productName: target.name,
-        sku: target.sku,
-        change: delta,
-        resultingStock: newQty,
-        reason: delta > 0 ? `Quick restock (+${delta})` : `Quick deduction (${delta})`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      },
-      ...prev.slice(0, 19),
-    ]);
-
-    setToast(`Updated ${target.name} stock (${delta > 0 ? `+${delta}` : delta} units)`);
-    setTimeout(() => setToast(""), 3000);
+    try {
+      const updated = await apiFetch<InventoryProductApi>(
+        `/products/${id}/stock?stock_delta=${delta}&reason=${encodeURIComponent(delta > 0 ? "Quick restock" : "Quick deduction")}`,
+        { method: "PATCH" },
+      );
+      setProducts((prev) => prev.map((p) => p.id === id ? {
+        ...p,
+        stockQty: updated.stock_count,
+        minStockLevel: updated.min_stock_level,
+        status: updated.stock_count === 0 ? "Out of Stock" : updated.stock_count <= updated.min_stock_level ? "Low Stock" : "In Stock",
+      } : p));
+      const logs = await apiFetch<InventoryTransactionApi[]>("/admin/inventory/transactions");
+      setAuditLogs(logs.map((log) => ({
+        id: String(log.id),
+        productId: String(log.product_id),
+        productName: log.product_name,
+        sku: log.sku,
+        change: Number(log.change),
+        resultingStock: Number(log.resulting_stock),
+        reason: log.reason,
+        timestamp: new Date(log.created_at).toLocaleString(),
+      })));
+      setToast(`Updated ${target.name} stock (${delta > 0 ? `+${delta}` : delta} units)`);
+      setTimeout(() => setToast(""), 3000);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update stock.");
+    }
   }
 
   function openAuditModal(product: AdminProduct) {
@@ -181,96 +207,84 @@ export default function AdminInventory() {
       delta = targetQty - auditModalProduct.stockQty;
     }
 
-    const minLevel = Number(auditMinLevel) || 5;
-    const newStatus =
-      targetQty <= 0 ? "Out of Stock" : targetQty <= minLevel ? "Low Stock" : "In Stock";
-
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === auditModalProduct.id
-          ? { ...p, stockQty: targetQty, minStockLevel: minLevel, status: newStatus }
-          : p,
-      ),
-    );
-
-    // Synchronize with API if delta is non-zero
-    if (delta !== 0) {
-      apiFetch(`/products/${auditModalProduct.id}/stock?stock_delta=${delta}`, { method: "PATCH" }).catch(() => {});
+    const minLevel = Number(auditMinLevel);
+    try {
+      const updated = await apiFetch<InventoryProductApi>(
+        `/products/${auditModalProduct.id}/stock?stock_delta=${delta}&min_stock_level=${minLevel}&reason=${encodeURIComponent(auditReason)}`,
+        { method: "PATCH" },
+      );
+      setProducts((prev) => prev.map((p) => p.id === auditModalProduct.id ? {
+        ...p,
+        stockQty: updated.stock_count,
+        minStockLevel: updated.min_stock_level,
+        status: updated.stock_count === 0 ? "Out of Stock" : updated.stock_count <= updated.min_stock_level ? "Low Stock" : "In Stock",
+      } : p));
+      const logs = await apiFetch<InventoryTransactionApi[]>("/admin/inventory/transactions");
+      setAuditLogs(logs.map((log) => ({
+        id: String(log.id),
+        productId: String(log.product_id),
+        productName: log.product_name,
+        sku: log.sku,
+        change: Number(log.change),
+        resultingStock: Number(log.resulting_stock),
+        reason: log.reason,
+        timestamp: new Date(log.created_at).toLocaleString(),
+      })));
+      setAuditModalProduct(null);
+      setToast(`Audit applied for ${auditModalProduct.name}! New stock: ${targetQty} units.`);
+      setTimeout(() => setToast(""), 3500);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to apply stock adjustment.");
     }
-
-    setAuditLogs((prev) => [
-      {
-        id: `log-${Date.now()}`,
-        productId: auditModalProduct.id,
-        productName: auditModalProduct.name,
-        sku: auditModalProduct.sku,
-        change: delta,
-        resultingStock: targetQty,
-        reason: auditReason,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      },
-      ...prev.slice(0, 19),
-    ]);
-
-    setAuditModalProduct(null);
-    setToast(`Audit applied for ${auditModalProduct.name}! New stock: ${targetQty} units.`);
-    setTimeout(() => setToast(""), 3500);
   }
 
-  function handleZeroOutStock(product: AdminProduct) {
+  async function handleZeroOutStock(product: AdminProduct) {
     if (!confirm(`Are you sure you want to write off all remaining ${product.stockQty} units of "${product.name}"?`)) return;
-
     const delta = -product.stockQty;
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === product.id ? { ...p, stockQty: 0, status: "Out of Stock" } : p,
-      ),
-    );
-
-    if (delta !== 0) {
-      apiFetch(`/products/${product.id}/stock?stock_delta=${delta}`, { method: "PATCH" }).catch(() => {});
+    try {
+      await apiFetch(`/products/${product.id}/stock?stock_delta=${delta}&reason=${encodeURIComponent("Damaged / Obsolete Stock Write-Off to Zero")}`, { method: "PATCH" });
+      setProducts((prev) => prev.map((item) => item.id === product.id ? { ...item, stockQty: 0, status: "Out of Stock" } : item));
+      setToast(`Stock written off for ${product.name}. Status set to Out of Stock.`);
+      setTimeout(() => setToast(""), 3500);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to write off stock.");
     }
-
-    setAuditLogs((prev) => [
-      {
-        id: `log-${Date.now()}`,
-        productId: product.id,
-        productName: product.name,
-        sku: product.sku,
-        change: delta,
-        resultingStock: 0,
-        reason: "Damaged / Obsolete Stock Write-Off to Zero",
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      },
-      ...prev.slice(0, 19),
-    ]);
-
-    setToast(`Stock written off for ${product.name}. Status set to Out of Stock.`);
-    setTimeout(() => setToast(""), 3500);
   }
 
-  function handleCreateBatch(e: React.FormEvent) {
+  async function handleCreateBatch(e: React.FormEvent) {
     e.preventDefault();
-    const newId = `prod-${Date.now()}`;
     const qty = Number(newBatch.stockQty) || 0;
     const minLvl = Number(newBatch.minStockLevel) || 5;
     const cost = Number(newBatch.costPrice) || 0;
     const sellingPrice = Number(newBatch.sellingPrice) || 0;
 
-    const created: AdminProduct = {
-      id: newId,
-      name: newBatch.name.trim(),
-      category: newBatch.category,
-      sku: newBatch.sku.trim() || `SKU-${Date.now().toString().slice(-6)}`,
-      costPrice: cost,
-      sellingPrice: sellingPrice,
-      stockQty: qty,
-      minStockLevel: minLvl,
-      specs: newBatch.specs || "Standard Batch Consignment",
-      status: qty === 0 ? "Out of Stock" : qty <= minLvl ? "Low Stock" : "In Stock",
-    };
-
-    setProducts([created, ...products]);
+    try {
+      const saved = await apiFetch<InventoryProductApi>("/products", {
+        method: "POST",
+        body: JSON.stringify({
+          name: newBatch.name.trim(),
+          category: newBatch.category,
+          sku: newBatch.sku.trim() || `SKU-${Date.now().toString().slice(-6)}`,
+          cost_price: cost,
+          price: sellingPrice,
+          stock_count: qty,
+          min_stock_level: minLvl,
+          specs: (newBatch.specs || "Standard Batch Consignment").split(",").map((item) => item.trim()).filter(Boolean),
+        }),
+      });
+      const created: AdminProduct = {
+        id: String(saved.id),
+        name: saved.name,
+        category: saved.category_name,
+        sku: saved.sku,
+        costPrice: Number(saved.cost_price),
+        sellingPrice: Number(saved.price),
+        stockQty: Number(saved.stock_count),
+        minStockLevel: Number(saved.min_stock_level),
+        specs: Array.isArray(saved.specs) ? saved.specs.join(", ") : "",
+        status: qty === 0 ? "Out of Stock" : qty <= minLvl ? "Low Stock" : "In Stock",
+      };
+      setProducts((current) => [created, ...current]);
     setIsAddBatchOpen(false);
     setNewBatch({
       name: "",
@@ -283,22 +297,11 @@ export default function AdminInventory() {
       specs: "Standard Batch Consignment",
     });
 
-    setAuditLogs((prev) => [
-      {
-        id: `log-${Date.now()}`,
-        productId: newId,
-        productName: created.name,
-        sku: created.sku,
-        change: qty,
-        resultingStock: qty,
-        reason: "New Hardware Batch Registered",
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      },
-      ...prev,
-    ]);
-
     setToast(`New batch "${created.name}" registered with ${qty} units!`);
     setTimeout(() => setToast(""), 3500);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to register stock batch.");
+    }
   }
 
   return (
@@ -328,6 +331,16 @@ export default function AdminInventory() {
       {toast && (
         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-xs font-semibold text-emerald-400">
           ✓ {toast}
+        </div>
+      )}
+      {loadError && (
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300">
+          Could not load inventory data: {loadError}
+        </div>
+      )}
+      {loading && (
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-slate-300">
+          Loading inventory from the database…
         </div>
       )}
 
@@ -710,7 +723,7 @@ export default function AdminInventory() {
                     <button
                       key={mode.key}
                       type="button"
-                      onClick={() => setAuditMode(mode.key as any)}
+                      onClick={() => setAuditMode(mode.key as typeof auditMode)}
                       className={`rounded-xl py-2 font-bold text-center transition-all ${
                         auditMode === mode.key
                           ? "bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-blue-400"

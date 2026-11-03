@@ -4,10 +4,23 @@ import React, { useEffect, useState } from "react";
 import {
   type AdminOrder,
   type TimeFilterPeriod,
-  mockAdminOrders,
   isDateInPeriod,
 } from "@/lib/adminData";
 import { apiFetch } from "@/lib/auth";
+
+interface AdminOrderApi {
+  id: string;
+  date: string;
+  created_at: string;
+  total: number;
+  status: AdminOrder["status"];
+  payment_status: string;
+  source: string;
+  recipient_name: string;
+  phone: string | null;
+  shipping_address: { recipient_name?: string; phone?: string };
+  items: { name: string; quantity: number }[];
+}
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
@@ -36,29 +49,30 @@ export default function AdminOrders() {
 
   useEffect(() => {
     let isMounted = true;
-    setLoading(true);
-    apiFetch<any[]>("/admin/orders")
+    apiFetch<AdminOrderApi[]>("/admin/orders")
       .then((data) => {
         if (!isMounted) return;
         if (Array.isArray(data) && data.length > 0) {
-          const mapped: AdminOrder[] = data.map((o) => ({
-            id: o.id,
+          const mapped: AdminOrder[] = data.filter((o) => o.source !== "POS").map((o) => ({
+            id: String(o.id),
             customerName: o.shipping_address?.recipient_name || o.recipient_name || "Customer",
             customerPhone: o.shipping_address?.phone || o.phone || "",
             date: o.date ? o.date.split("T")[0] : (o.created_at ? o.created_at.split("T")[0] : new Date().toISOString().split("T")[0]),
             totalAmount: o.total || 0,
             status: o.status || "Pending",
             paymentStatus: o.payment_status === "Paid" ? "Paid" : "Pending Verification",
-            itemsSummary: (o.items || []).map((it: any) => `${it.name} (${it.quantity}x)`).join(", ") || "Custom Hardware Assembly",
+            itemsSummary: (o.items || []).map((it) => `${it.name} (${it.quantity}x)`).join(", ") || "Manual Hardware Order",
           }));
           setOrders(mapped);
         } else {
-          setOrders(mockAdminOrders);
+          setOrders([]);
         }
       })
       .catch((err) => {
-        console.warn("Failed to load orders from database, using mock data:", err);
-        if (isMounted) setOrders(mockAdminOrders);
+        if (isMounted) {
+          setOrders([]);
+          alert(err instanceof Error ? err.message : "Failed to load orders.");
+        }
       })
       .finally(() => {
         if (isMounted) setLoading(false);
@@ -92,12 +106,13 @@ export default function AdminOrders() {
 
   async function handleStatusChange(id: string, newStatus: AdminOrder["status"]) {
     try {
-      await apiFetch<any>(`/orders/${id}/status`, {
+      await apiFetch<AdminOrderApi>(`/orders/${encodeURIComponent(id)}/status`, {
         method: "PATCH",
         body: JSON.stringify({ status: newStatus }),
       });
-    } catch {
-      // Local fallback
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update order.");
+      return;
     }
 
     setOrders((prev) =>
@@ -110,36 +125,37 @@ export default function AdminOrders() {
   // CREATE ORDER
   async function handleCreateOrder(e: React.FormEvent) {
     e.preventDefault();
-    const newId = `ORD-${Date.now().toString().slice(-6)}`;
-    const newOrder: AdminOrder = {
-      id: newId,
-      customerName: createForm.customerName.trim(),
-      customerPhone: createForm.customerPhone.trim(),
-      date: new Date().toISOString().split("T")[0],
-      totalAmount: Number(createForm.totalAmount) || 0,
-      status: createForm.status,
-      paymentStatus: createForm.paymentStatus,
-      itemsSummary: createForm.itemsSummary.trim(),
-    };
-
-    // Attempt backend registration
-    apiFetch("/orders", {
-      method: "POST",
-      body: JSON.stringify({
-        customer_email: createForm.customerEmail || `${newId.toLowerCase()}@guest.technova.lk`,
-        payment_method: createForm.paymentStatus === "Paid" ? "Card (POS EDC)" : "Cash on Delivery",
-        shipping_address: {
-          recipient_name: createForm.customerName.trim(),
-          phone: createForm.customerPhone.trim(),
-          street: createForm.address,
-          city: "Colombo",
-          postal_code: "00300",
-        },
-        items: [],
-      }),
-    }).catch(() => {});
-
-    setOrders([newOrder, ...orders]);
+    try {
+      const created = await apiFetch<AdminOrderApi>("/orders", {
+        method: "POST",
+        body: JSON.stringify({
+          status: createForm.status,
+          payment_status: createForm.paymentStatus,
+          total_amount: Number(createForm.totalAmount) || 0,
+          items_summary: createForm.itemsSummary.trim(),
+          customer_email: createForm.customerEmail || null,
+          payment_method: createForm.paymentStatus === "Paid" ? "Card (POS EDC)" : "Cash on Delivery",
+          shipping_address: {
+            recipient_name: createForm.customerName.trim(),
+            phone: createForm.customerPhone.trim(),
+            street: createForm.address,
+            city: "Colombo",
+            postal_code: "00300",
+          },
+          items: [],
+        }),
+      });
+      const newOrder: AdminOrder = {
+        id: String(created.id),
+        customerName: created.recipient_name,
+        customerPhone: created.phone || "",
+        date: String(created.created_at).split("T")[0],
+        totalAmount: Number(created.total || 0),
+        status: created.status,
+        paymentStatus: created.payment_status === "Paid" ? "Paid" : "Pending Verification",
+        itemsSummary: (created.items || []).map((item) => `${item.name} (${item.quantity}x)`).join(", "),
+      };
+      setOrders((current) => [newOrder, ...current]);
     setIsCreateOpen(false);
     setCreateForm({
       customerName: "",
@@ -151,8 +167,11 @@ export default function AdminOrders() {
       paymentStatus: "Paid",
       status: "Pending",
     });
-    setToast(`Order ${newId} created successfully!`);
+    setToast(`Order created successfully!`);
     setTimeout(() => setToast(""), 3500);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to create order.");
+    }
   }
 
   // UPDATE ORDER
@@ -161,14 +180,19 @@ export default function AdminOrders() {
     if (!editOrder) return;
 
     try {
-      await apiFetch(`/orders/${editOrder.id}/status`, {
+      await apiFetch(`/orders/${encodeURIComponent(editOrder.id)}`, {
         method: "PATCH",
         body: JSON.stringify({
+          customer_name: editOrder.customerName,
+          phone: editOrder.customerPhone,
           status: editOrder.status,
           payment_status: editOrder.paymentStatus,
         }),
       });
-    } catch {}
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update order.");
+      return;
+    }
 
     setOrders((prev) =>
       prev.map((o) => (o.id === editOrder.id ? { ...editOrder } : o)),
@@ -180,8 +204,14 @@ export default function AdminOrders() {
   }
 
   // DELETE / CANCEL ORDER
-  function handleDeleteOrder(order: AdminOrder) {
+  async function handleDeleteOrder(order: AdminOrder) {
     if (!confirm(`Are you sure you want to permanently delete/cancel Order "${order.id}"?`)) return;
+    try {
+      await apiFetch(`/orders/${encodeURIComponent(order.id)}`, { method: "DELETE" });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to cancel order.");
+      return;
+    }
 
     setOrders((prev) => prev.filter((o) => o.id !== order.id));
     if (viewOrder?.id === order.id) setViewOrder(null);
@@ -218,6 +248,11 @@ export default function AdminOrders() {
       {toast && (
         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-xs font-semibold text-emerald-400">
           ✓ {toast}
+        </div>
+      )}
+      {loading && (
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-slate-300">
+          Loading orders from the database...
         </div>
       )}
 
@@ -648,6 +683,7 @@ export default function AdminOrders() {
                 <input
                   type="text"
                   required
+                  disabled
                   value={editOrder.itemsSummary}
                   onChange={(e) => setEditOrder({ ...editOrder, itemsSummary: e.target.value })}
                   className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white focus:border-blue-400 focus:outline-none"
@@ -695,6 +731,7 @@ export default function AdminOrders() {
                   type="number"
                   min="0"
                   required
+                  disabled
                   value={editOrder.totalAmount}
                   onChange={(e) => setEditOrder({ ...editOrder, totalAmount: Number(e.target.value) })}
                   className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white font-mono focus:border-blue-400 focus:outline-none"

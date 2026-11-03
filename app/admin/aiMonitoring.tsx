@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { apiFetch } from "@/lib/auth";
 
 interface AILogRecord {
   id: string;
@@ -11,6 +12,25 @@ interface AILogRecord {
   outcome: string;
   status: "Success" | "Engaged" | "Safety Fallback";
   reasoning?: string;
+}
+
+interface AIRecommendationApi {
+  id: number;
+  timestamp: string;
+  budget: number | null;
+  intent: string;
+  recommended: string;
+  outcome: string;
+  status: AILogRecord["status"];
+  reasoning?: string | null;
+}
+
+interface AISettingsApi {
+  is_active: boolean;
+  budget_tolerance_pct: number;
+  creativity_mode: "Strict Catalogue Matches" | "Adaptive / High Variance";
+  stock_constraint: "Strict In-Stock Only" | "Allow Backorder Pre-order";
+  min_confidence_score: number;
 }
 
 export default function AdminAIMonitoring() {
@@ -31,6 +51,7 @@ export default function AdminAIMonitoring() {
     stockConstraint: "Strict In-Stock Only" as "Strict In-Stock Only" | "Allow Backorder Pre-order",
     minConfidenceScore: 85,
   });
+  const [loadError, setLoadError] = useState("");
 
   // Simulation Form
   const [simForm, setSimForm] = useState({
@@ -42,48 +63,44 @@ export default function AdminAIMonitoring() {
   });
 
   // AI Logs State
-  const [aiLogs, setAiLogs] = useState<AILogRecord[]>([
-    {
-      id: "ai-log-101",
-      timestamp: "2026-10-27 13:45",
-      budget: "Rs. 450,000",
-      intent: "Hardcore 1440p Gaming & Streaming",
-      recommended: "ASUS ROG Strix G16 + RTX 4070 Super",
-      outcome: "Converted (Cart Added)",
-      status: "Success",
-      reasoning: "Customer requested high FPS esports and Twitch streaming; matched high TDP GPU and multi-core CPU within LKR 450K budget envelope.",
-    },
-    {
-      id: "ai-log-102",
-      timestamp: "2026-10-27 11:20",
-      budget: "Rs. 200,000",
-      intent: "Software Engineering & Virtualization",
-      recommended: "Ryzen 7 7800X3D + 32GB DDR5 RAM",
-      outcome: "Viewed Product Specs",
-      status: "Engaged",
-      reasoning: "Prioritized DDR5 RAM bandwidth and AMD 3D V-Cache compilation throughput.",
-    },
-    {
-      id: "ai-log-103",
-      timestamp: "2026-10-26 16:15",
-      budget: "Rs. 100,000",
-      intent: "Competitive Esports 240Hz Gaming",
-      recommended: "ASUS TUF 27\" 165Hz Monitor",
-      outcome: "Converted (Checkout Complete)",
-      status: "Success",
-      reasoning: "High refresh panel recommended within strict 100K budget; fast IPS response time selected.",
-    },
-    {
-      id: "ai-log-104",
-      timestamp: "2026-10-26 14:00",
-      budget: "Rs. 80,000",
-      intent: "Ultra-Fast Video Editing Storage Cache",
-      recommended: "Samsung 990 PRO 2TB NVMe SSD",
-      outcome: "Item Out of Stock Prompted",
-      status: "Safety Fallback",
-      reasoning: "Primary item stock count was zero; engine safely prevented cart add and suggested notification alert.",
-    },
-  ]);
+  const [aiLogs, setAiLogs] = useState<AILogRecord[]>([]);
+
+  function mapLog(log: AIRecommendationApi): AILogRecord {
+    return {
+      id: String(log.id),
+      timestamp: new Date(log.timestamp).toLocaleString(),
+      budget: log.budget == null ? "—" : `Rs. ${Number(log.budget).toLocaleString("en-LK")}`,
+      intent: log.intent || "",
+      recommended: log.recommended || "",
+      outcome: log.outcome || "",
+      status: log.status,
+      reasoning: log.reasoning || "",
+    };
+  }
+
+  function budgetAmount(value: string): number | null {
+    const numeric = Number(value.replace(/[^\d.]/g, ""));
+    return Number.isFinite(numeric) ? numeric : null;
+  }
+
+  useEffect(() => {
+    Promise.all([
+      apiFetch<AIRecommendationApi[]>("/admin/ai/logs"),
+      apiFetch<AISettingsApi>("/admin/ai/settings"),
+    ])
+      .then(([logs, settings]) => {
+        setAiLogs(logs.map(mapLog));
+        setToggleActive(Boolean(settings.is_active));
+        setEngineConfig({
+          budgetTolerancePct: Number(settings.budget_tolerance_pct),
+          creativityMode: settings.creativity_mode,
+          stockConstraint: settings.stock_constraint,
+          minConfidenceScore: Number(settings.min_confidence_score),
+        });
+        setLoadError("");
+      })
+      .catch((err) => setLoadError(err instanceof Error ? err.message : "Could not load AI settings."));
+  }, []);
 
   const filteredLogs = aiLogs.filter(
     (l) =>
@@ -95,52 +112,112 @@ export default function AdminAIMonitoring() {
   );
 
   // CREATE (SIMULATE)
-  function handleSimulate(e: React.FormEvent) {
+  async function handleSimulate(e: React.FormEvent) {
     e.preventDefault();
-    const now = new Date();
-    const newLog: AILogRecord = {
-      id: `ai-log-${Math.floor(200 + Math.random() * 800)}`,
-      timestamp: `${now.toISOString().split("T")[0]} ${now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
-      budget: simForm.budget.trim(),
-      intent: simForm.intent.trim(),
-      recommended: simForm.recommended.trim(),
-      outcome: simForm.outcome.trim(),
-      status: simForm.status,
-      reasoning: `Matched via ${engineConfig.creativityMode} with ${engineConfig.stockConstraint}. Confidence: ${engineConfig.minConfidenceScore}%.`,
-    };
-
-    setAiLogs([newLog, ...aiLogs]);
-    setIsSimulateOpen(false);
-    setToast(`Telemetry session ${newLog.id} simulated and added to live queue!`);
-    setTimeout(() => setToast(""), 3500);
+    try {
+      const saved = await apiFetch<{ id: number; timestamp: string }>("/admin/ai/logs", {
+        method: "POST",
+        body: JSON.stringify({
+          budget: budgetAmount(simForm.budget),
+          intent: simForm.intent.trim(),
+          recommended: simForm.recommended.trim(),
+          outcome: simForm.outcome.trim(),
+          status: simForm.status,
+          reasoning: `Matched via ${engineConfig.creativityMode} with ${engineConfig.stockConstraint}. Confidence: ${engineConfig.minConfidenceScore}%.`,
+        }),
+      });
+      const newLog = mapLog({
+        ...simForm,
+        ...saved,
+        budget: budgetAmount(simForm.budget),
+        timestamp: saved.timestamp || new Date().toISOString(),
+      });
+      setAiLogs((current) => [newLog, ...current]);
+      setIsSimulateOpen(false);
+      setToast(`Telemetry session ${newLog.id} recorded.`);
+      setTimeout(() => setToast(""), 3500);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to save AI telemetry.");
+    }
   }
 
   // UPDATE LOG
-  function handleSaveEditLog(e: React.FormEvent) {
+  async function handleSaveEditLog(e: React.FormEvent) {
     e.preventDefault();
     if (!editLog) return;
-
-    setAiLogs((prev) =>
-      prev.map((l) => (l.id === editLog.id ? { ...editLog } : l)),
-    );
-
-    setToast(`Telemetry log ${editLog.id} updated.`);
-    setEditLog(null);
-    setTimeout(() => setToast(""), 3500);
+    try {
+      await apiFetch(`/admin/ai/logs/${editLog.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          budget: budgetAmount(editLog.budget),
+          intent: editLog.intent,
+          recommended: editLog.recommended,
+          outcome: editLog.outcome,
+          status: editLog.status,
+          reasoning: editLog.reasoning,
+        }),
+      });
+      setAiLogs((prev) => prev.map((log) => log.id === editLog.id ? { ...editLog } : log));
+      setToast(`Telemetry log ${editLog.id} updated.`);
+      setEditLog(null);
+      setTimeout(() => setToast(""), 3500);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update AI telemetry.");
+    }
   }
 
   // UPDATE ENGINE CONFIG
-  function handleSaveEngineConfig(e: React.FormEvent) {
+  async function handleSaveEngineConfig(e: React.FormEvent) {
     e.preventDefault();
-    setIsEngineConfigOpen(false);
-    setToast(`AI Engine parameters updated! Budget Tolerance: ±${engineConfig.budgetTolerancePct}%.`);
-    setTimeout(() => setToast(""), 3500);
+    try {
+      await apiFetch("/admin/ai/settings", {
+        method: "PUT",
+        body: JSON.stringify({
+          budget_tolerance_pct: engineConfig.budgetTolerancePct,
+          creativity_mode: engineConfig.creativityMode,
+          stock_constraint: engineConfig.stockConstraint,
+          min_confidence_score: engineConfig.minConfidenceScore,
+          is_active: toggleActive,
+        }),
+      });
+      setIsEngineConfigOpen(false);
+      setToast(`AI parameters saved. Budget tolerance: ±${engineConfig.budgetTolerancePct}%.`);
+      setTimeout(() => setToast(""), 3500);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to save AI settings.");
+    }
+  }
+
+  async function handleToggleEngine() {
+    const active = !toggleActive;
+    try {
+      await apiFetch("/admin/ai/settings", {
+        method: "PUT",
+        body: JSON.stringify({
+          budget_tolerance_pct: engineConfig.budgetTolerancePct,
+          creativity_mode: engineConfig.creativityMode,
+          stock_constraint: engineConfig.stockConstraint,
+          min_confidence_score: engineConfig.minConfidenceScore,
+          is_active: active,
+        }),
+      });
+      setToggleActive(active);
+      setToast(active ? "AI Assistant Engine is online." : "AI Assistant Engine paused.");
+      setTimeout(() => setToast(""), 3000);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update AI engine status.");
+    }
   }
 
   // DELETE LOG
-  function handleDeleteLog(log: AILogRecord) {
+  async function handleDeleteLog(log: AILogRecord) {
     if (!confirm(`Delete telemetry record "${log.id}"?`)) return;
-
+    try {
+      await apiFetch(`/admin/ai/logs/${log.id}`, { method: "DELETE" });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete AI log.");
+      return;
+    }
     setAiLogs((prev) => prev.filter((l) => l.id !== log.id));
     if (viewLog?.id === log.id) setViewLog(null);
     if (editLog?.id === log.id) setEditLog(null);
@@ -150,11 +227,16 @@ export default function AdminAIMonitoring() {
   }
 
   // CLEAR ALL
-  function handleClearAllLogs() {
+  async function handleClearAllLogs() {
     if (!confirm("Are you sure you want to clear all telemetry logs?")) return;
-    setAiLogs([]);
-    setToast("All AI telemetry logs cleared.");
-    setTimeout(() => setToast(""), 3500);
+    try {
+      await apiFetch("/admin/ai/logs", { method: "DELETE" });
+      setAiLogs([]);
+      setToast("All AI telemetry logs cleared.");
+      setTimeout(() => setToast(""), 3500);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to clear AI logs.");
+    }
   }
 
   return (
@@ -189,11 +271,7 @@ export default function AdminAIMonitoring() {
 
           <button
             type="button"
-            onClick={() => {
-              setToggleActive(!toggleActive);
-              setToast(toggleActive ? "AI Assistant Engine PAUSED." : "AI Assistant Engine is ONLINE & ACTIVE.");
-              setTimeout(() => setToast(""), 3000);
-            }}
+            onClick={handleToggleEngine}
             className={`rounded-2xl px-4 py-2.5 text-xs font-black transition-all ${
               toggleActive
                 ? "bg-emerald-500 text-black shadow-lg shadow-emerald-500/20"
@@ -210,13 +288,18 @@ export default function AdminAIMonitoring() {
           ✓ {toast}
         </div>
       )}
+      {loadError && (
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300">
+          Could not load AI data: {loadError}
+        </div>
+      )}
 
       {/* Telemetry Metrics Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
           <span className="text-[11px] font-bold uppercase text-slate-400 block">Total Inquiries</span>
           <span className="text-xl sm:text-2xl font-black text-white font-mono mt-1 block">
-            1,248
+            {aiLogs.length}
           </span>
           <span className="text-[10px] text-purple-300 block mt-1">This month</span>
         </div>
@@ -224,7 +307,9 @@ export default function AdminAIMonitoring() {
         <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
           <span className="text-[11px] font-bold uppercase text-slate-400 block">Conversion Rate</span>
           <span className="text-xl sm:text-2xl font-black text-emerald-400 font-mono mt-1 block">
-            32.4%
+            {aiLogs.length
+              ? `${((aiLogs.filter((log) => log.status === "Success").length / aiLogs.length) * 100).toFixed(1)}%`
+              : "0%"}
           </span>
           <span className="text-[10px] text-slate-400 block mt-1">Cart adds via AI</span>
         </div>
@@ -232,7 +317,7 @@ export default function AdminAIMonitoring() {
         <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
           <span className="text-[11px] font-bold uppercase text-slate-400 block">Attributed Revenue</span>
           <span className="text-xl sm:text-2xl font-black text-blue-400 font-mono mt-1 block">
-            Rs. 2,740,000
+            Not tracked
           </span>
           <span className="text-[10px] text-slate-400 block mt-1">Sales driven by AI engine</span>
         </div>
@@ -240,7 +325,7 @@ export default function AdminAIMonitoring() {
         <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
           <span className="text-[11px] font-bold uppercase text-slate-400 block">Inventory Accuracy</span>
           <span className="text-xl sm:text-2xl font-black text-white font-mono mt-1 block">
-            100%
+            Not measured
           </span>
           <span className="text-[10px] text-slate-400 block mt-1">Filtered in-stock only</span>
         </div>
@@ -558,7 +643,7 @@ export default function AdminAIMonitoring() {
                   <label className="block text-slate-300 font-bold mb-1">Status</label>
                   <select
                     value={editLog.status}
-                    onChange={(e) => setEditLog({ ...editLog, status: e.target.value as any })}
+                    onChange={(e) => setEditLog({ ...editLog, status: e.target.value as AILogRecord["status"] })}
                     className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white focus:border-purple-400 focus:outline-none"
                   >
                     <option value="Success">Success (Cart Added)</option>
@@ -634,7 +719,7 @@ export default function AdminAIMonitoring() {
                   <label className="block text-slate-300 font-bold mb-1">Interaction Status</label>
                   <select
                     value={simForm.status}
-                    onChange={(e) => setSimForm({ ...simForm, status: e.target.value as any })}
+                    onChange={(e) => setSimForm({ ...simForm, status: e.target.value as AILogRecord["status"] })}
                     className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white focus:border-purple-400 focus:outline-none"
                   >
                     <option value="Success">Success (High Conversion)</option>
@@ -739,7 +824,7 @@ export default function AdminAIMonitoring() {
                 <select
                   value={engineConfig.creativityMode}
                   onChange={(e) =>
-                    setEngineConfig({ ...engineConfig, creativityMode: e.target.value as any })
+                    setEngineConfig({ ...engineConfig, creativityMode: e.target.value as AISettingsApi["creativity_mode"] })
                   }
                   className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white focus:border-purple-400 focus:outline-none"
                 >
@@ -753,7 +838,7 @@ export default function AdminAIMonitoring() {
                 <select
                   value={engineConfig.stockConstraint}
                   onChange={(e) =>
-                    setEngineConfig({ ...engineConfig, stockConstraint: e.target.value as any })
+                    setEngineConfig({ ...engineConfig, stockConstraint: e.target.value as AISettingsApi["stock_constraint"] })
                   }
                   className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white focus:border-purple-400 focus:outline-none"
                 >

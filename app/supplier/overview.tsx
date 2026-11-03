@@ -49,12 +49,10 @@ export default function SupplierOverview({ onNavigate }: SupplierOverviewProps) 
                 Authorized Distributor Portal
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
-              {profile.companyName}
-            </h1>
-            <p className="text-xs text-slate-300 max-w-xl">
-              Distributor ID: <strong className="text-white font-mono">{profile.vendorCode}</strong> • Direct wholesale inventory pipeline & fulfillment for TECHNOVA retail stores.
-            </p>
+           
+           <h1 className="mt-2 text-2xl sm:text-3xl font-black text-white">
+            Supplier Dashboard
+          </h1>
           </div>
 
           <div className="shrink-0 flex flex-col sm:flex-row gap-3">

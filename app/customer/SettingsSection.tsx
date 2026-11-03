@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { getSession, updateCustomerProfile, updateCustomerPassword } from "@/lib/auth";
+import {
+  apiFetch,
+  updateCustomerProfile,
+  updateCustomerPassword,
+} from "@/lib/auth";
 
 export default function SettingsSection() {
   const [profileForm, setProfileForm] = useState({
@@ -20,24 +24,42 @@ export default function SettingsSection() {
   });
 
   const [profileSuccessMsg, setProfileSuccessMsg] = useState("");
+  const [profileErrorMsg, setProfileErrorMsg] = useState("");
   const [passwordSuccessMsg, setPasswordSuccessMsg] = useState("");
   const [passwordErrorMsg, setPasswordErrorMsg] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
 
   useEffect(() => {
-    const session = getSession();
-    if (session) {
-      setProfileForm((prev) => ({
-        ...prev,
-        name: session.name || prev.name,
-        email: session.email || prev.email,
-        phone: session.phone || prev.phone,
-        street: session.street || prev.street,
-        city: session.city || prev.city,
-        postalCode: session.postalCode || prev.postalCode,
-      }));
-    }
+    let active = true;
+    apiFetch<{
+      name: string;
+      email: string;
+      phone: string;
+      street: string;
+      city: string;
+      postal_code: string;
+    }>("/auth/profile")
+      .then((profile) => {
+        if (!active) return;
+        setProfileForm({
+          name: profile.name,
+          email: profile.email,
+          phone: profile.phone || "",
+          street: profile.street || "",
+          city: profile.city || "",
+          postalCode: profile.postal_code || "",
+        });
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        setProfileErrorMsg(
+          error instanceof Error ? error.message : "Failed to load your profile.",
+        );
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   async function handleProfileSubmit(e: React.FormEvent) {
@@ -72,8 +94,8 @@ export default function SettingsSection() {
       return;
     }
 
-    if (passwordForm.newPassword.length < 6) {
-      setPasswordErrorMsg("New password must be at least 6 characters long.");
+    if (passwordForm.newPassword.length < 8) {
+      setPasswordErrorMsg("New password must be at least 8 characters long.");
       return;
     }
 
@@ -114,6 +136,12 @@ export default function SettingsSection() {
           Update your contact information, delivery address, and login credentials for TECHNOVA Computers.
         </p>
       </div>
+
+      {profileErrorMsg && (
+        <div className="rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {profileErrorMsg}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2 lg:gap-8">
         {/* Form 1: Personal Details & Shipping Address */}

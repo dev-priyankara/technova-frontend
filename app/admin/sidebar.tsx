@@ -1,8 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import { mockAdminStats } from "@/lib/adminData";
+import { apiFetch } from "@/lib/auth";
+import type { AdminProfileData } from "./profile";
+
+interface AdminDashboardBadges {
+  low_stock_count: number;
+  pending_orders: number;
+}
 import { getStoredAdminProfile } from "./profile";
 
 export type AdminSection =
@@ -36,6 +41,8 @@ export default function AdminSidebar({
 }: SidebarProps) {
   const [profileName, setProfileName] = useState("Kasun Silva");
   const [profileAvatar, setProfileAvatar] = useState("");
+  const [lowStockBadge, setLowStockBadge] = useState(0);
+  const [pendingOrdersBadge, setPendingOrdersBadge] = useState(0);
 
   useEffect(() => {
     function loadProfile() {
@@ -47,16 +54,29 @@ export default function AdminSidebar({
     }
     loadProfile();
 
-    function handleUpdate(e: any) {
-      if (e.detail) {
-        setProfileName(e.detail.name || "Kasun Silva");
-        setProfileAvatar(e.detail.avatarUrl || "");
+    function handleUpdate(event: Event) {
+      const { detail } = event as CustomEvent<AdminProfileData>;
+      if (detail) {
+        setProfileName(detail.name || "Kasun Silva");
+        setProfileAvatar(detail.avatarUrl || "");
       }
     }
     window.addEventListener("admin_profile_updated", handleUpdate);
     return () => {
       window.removeEventListener("admin_profile_updated", handleUpdate);
     };
+  }, []);
+
+  useEffect(() => {
+    apiFetch<AdminDashboardBadges>("/admin/dashboard")
+      .then((dashboard) => {
+        setLowStockBadge(Number(dashboard.low_stock_count || 0));
+        setPendingOrdersBadge(Number(dashboard.pending_orders || 0));
+      })
+      .catch(() => {
+        setLowStockBadge(0);
+        setPendingOrdersBadge(0);
+      });
   }, []);
 
   function getInitials(nameStr: string): string {
@@ -123,7 +143,7 @@ export default function AdminSidebar({
     {
       id: "inventory",
       label: "Inventory & Stock",
-      badge: mockAdminStats.lowStockAlertsCount,
+      badge: lowStockBadge,
       icon: (
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
           <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
@@ -145,7 +165,7 @@ export default function AdminSidebar({
     {
       id: "orders",
       label: "Customer Orders",
-      badge: mockAdminStats.pendingOrdersCount,
+      badge: pendingOrdersBadge,
       icon: (
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
           <rect width="16" height="13" x="4" y="5" rx="2" />

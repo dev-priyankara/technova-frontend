@@ -1,24 +1,81 @@
 "use client";
 
-import React from "react";
-import {
-  mockAdminStats,
-  mockAdminProducts,
-  mockAdminPOSTransactions,
-  mockAdminOrders,
-} from "@/lib/adminData";
+import React, { useEffect, useState } from "react";
+import { apiFetch } from "@/lib/auth";
 
 interface OverviewProps {
   onNavigate: (section: "products" | "users" | "inventory" | "sales" | "orders" | "suppliers") => void;
 }
 
+interface DashboardProduct {
+  id: number;
+  name: string;
+  sku: string;
+  stock_count: number;
+  min_stock_level: number;
+}
+
+interface DashboardOrderItem {
+  name: string;
+  quantity: number;
+}
+
+interface DashboardOrder {
+  id: string;
+  recipient_name: string;
+  phone: string | null;
+  total: number;
+  status: string;
+  payment_status: string;
+  items: DashboardOrderItem[];
+}
+
+interface DashboardData {
+  today_sales: number;
+  month_sales: number;
+  pending_orders: number;
+  low_stock_count: number;
+  out_of_stock_count: number;
+  low_stock_products: DashboardProduct[];
+  recent_pos_sales: {
+    id: number;
+    receipt_no: string;
+    payment_method: string;
+    cashier_name: string;
+    date: string;
+    discount: number;
+    final_amount: number;
+    items_count: number;
+  }[];
+  recent_orders: DashboardOrder[];
+}
+
 export default function AdminOverview({ onNavigate }: OverviewProps) {
-  const lowStockItems = mockAdminProducts.filter(
-    (p) => p.status === "Low Stock" || p.status === "Out of Stock",
-  );
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    apiFetch<DashboardData>("/admin/dashboard")
+      .then(setDashboard)
+      .catch((err) => setError(err instanceof Error ? err.message : "Could not load dashboard data."));
+  }, []);
+
+  const lowStockItems = (dashboard?.low_stock_products ?? []).map((item) => ({
+    ...item,
+    status: item.stock_count === 0 ? "Out of Stock" : "Low Stock",
+    stockQty: item.stock_count,
+    minStockLevel: item.min_stock_level,
+  }));
+  const posSales = dashboard?.recent_pos_sales ?? [];
+  const orders = dashboard?.recent_orders ?? [];
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300">
+          Dashboard data could not be loaded: {error}
+        </div>
+      )}
       {/* Welcome Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-3xl border border-white/10 bg-gradient-to-r from-blue-950/70 via-slate-900 to-indigo-950/70 p-6 backdrop-blur-xl shadow-xl shadow-blue-950/40">
         <div>
@@ -61,7 +118,7 @@ export default function AdminOverview({ onNavigate }: OverviewProps) {
             </span>
           </div>
           <div className="mt-2 text-lg sm:text-2xl font-black text-white font-mono">
-            Rs. {mockAdminStats.todaySalesLKR.toLocaleString("en-LK")}
+            Rs. {Number(dashboard?.today_sales ?? 0).toLocaleString("en-LK")}
           </div>
           <span className="mt-1 inline-flex items-center text-[10px] text-emerald-400 font-semibold">
             ↑ Active Cashier Counters
@@ -79,7 +136,7 @@ export default function AdminOverview({ onNavigate }: OverviewProps) {
             </span>
           </div>
           <div className="mt-2 text-lg sm:text-2xl font-black text-white font-mono">
-            Rs. {(mockAdminStats.monthlySalesLKR / 1000000).toFixed(2)}M
+            Rs. {(Number(dashboard?.month_sales ?? 0) / 1000000).toFixed(2)}M
           </div>
           <span className="mt-1 inline-flex items-center text-[10px] text-blue-300 font-semibold">
             Oct 2026 Fiscal Target: 92%
@@ -97,10 +154,10 @@ export default function AdminOverview({ onNavigate }: OverviewProps) {
             </span>
           </div>
           <div className="mt-2 text-lg sm:text-2xl font-black text-rose-400 font-mono">
-            {mockAdminStats.lowStockAlertsCount} Items
+            {Number(dashboard?.low_stock_count ?? 0)} Items
           </div>
           <span className="mt-1 inline-flex items-center text-[10px] text-rose-300 font-semibold">
-            {mockAdminStats.outOfStockCount} Out of Stock
+            {Number(dashboard?.out_of_stock_count ?? 0)} Out of Stock
           </span>
         </div>
 
@@ -115,7 +172,7 @@ export default function AdminOverview({ onNavigate }: OverviewProps) {
             </span>
           </div>
           <div className="mt-2 text-lg sm:text-2xl font-black text-amber-300 font-mono">
-            {mockAdminStats.pendingOrdersCount} Pending
+            {Number(dashboard?.pending_orders ?? 0)} Pending
           </div>
           <span className="mt-1 inline-flex items-center text-[10px] text-slate-400 font-semibold">
             Requires Courier Dispatch
@@ -193,12 +250,12 @@ export default function AdminOverview({ onNavigate }: OverviewProps) {
               onClick={() => onNavigate("sales")}
               className="text-xs font-bold text-blue-400 hover:text-blue-300"
             >
-              All Sales ({mockAdminPOSTransactions.length}) →
+              All Sales ({posSales.length}) →
             </button>
           </div>
 
           <div className="mt-4 space-y-3">
-            {mockAdminPOSTransactions.slice(0, 4).map((tx) => (
+            {posSales.slice(0, 4).map((tx) => (
               <div
                 key={tx.id}
                 className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.02] p-3 hover:bg-white/5 transition-colors"
@@ -206,28 +263,28 @@ export default function AdminOverview({ onNavigate }: OverviewProps) {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-xs font-bold text-white">
-                      {tx.receiptNo}
+                      {tx.receipt_no}
                     </span>
                     <span className="text-[10px] rounded bg-white/10 px-1.5 py-0.2 text-slate-300">
-                      {tx.paymentMethod}
+                      {tx.payment_method}
                     </span>
                   </div>
                   <span className="text-[11px] text-slate-400 block mt-0.5">
-                    Cashier: {tx.cashierName} • {tx.date} {tx.time}
+                    Cashier: {tx.cashier_name} • {new Date(tx.date).toLocaleString()}
                   </span>
-                  {tx.discount > 0 && (
+                  {Number(tx.discount) > 0 && (
                     <span className="text-[10px] font-bold text-emerald-400 block">
-                      ✨ 2% Discount Applied (-Rs. {tx.discount.toLocaleString("en-LK")})
+                      ✨ 2% Discount Applied (-Rs. {Number(tx.discount).toLocaleString("en-LK")})
                     </span>
                   )}
                 </div>
 
                 <div className="text-right">
                   <span className="font-mono text-sm font-black text-white block">
-                    Rs. {tx.finalAmount.toLocaleString("en-LK")}
+                    Rs. {Number(tx.final_amount).toLocaleString("en-LK")}
                   </span>
                   <span className="text-[10px] text-slate-400">
-                    {tx.itemsCount} items
+                    {tx.items_count} items
                   </span>
                 </div>
               </div>
@@ -247,12 +304,12 @@ export default function AdminOverview({ onNavigate }: OverviewProps) {
               onClick={() => onNavigate("orders")}
               className="text-xs font-bold text-blue-400 hover:text-blue-300"
             >
-              All Orders ({mockAdminOrders.length}) →
+              All Orders ({orders.length}) →
             </button>
           </div>
 
           <div className="mt-4 space-y-3">
-            {mockAdminOrders.map((ord) => (
+            {orders.map((ord) => (
               <div
                 key={ord.id}
                 className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.02] p-3 hover:bg-white/5 transition-colors"
@@ -275,19 +332,19 @@ export default function AdminOverview({ onNavigate }: OverviewProps) {
                     </span>
                   </div>
                   <span className="text-[11px] text-slate-300 block mt-0.5 font-medium truncate max-w-[220px]">
-                    {ord.customerName} ({ord.customerPhone})
+                    {ord.recipient_name} ({ord.phone})
                   </span>
                   <span className="text-[10px] text-slate-400 block truncate max-w-[220px]">
-                    {ord.itemsSummary}
+                    {ord.items.map((item) => `${item.name} (${item.quantity}x)`).join(", ")}
                   </span>
                 </div>
 
                 <div className="text-right">
                   <span className="font-mono text-sm font-black text-white block">
-                    Rs. {ord.totalAmount.toLocaleString("en-LK")}
+                    Rs. {Number(ord.total).toLocaleString("en-LK")}
                   </span>
                   <span className="text-[10px] text-emerald-400">
-                    {ord.paymentStatus}
+                    {ord.payment_status}
                   </span>
                 </div>
               </div>
@@ -298,4 +355,3 @@ export default function AdminOverview({ onNavigate }: OverviewProps) {
     </div>
   );
 }
-

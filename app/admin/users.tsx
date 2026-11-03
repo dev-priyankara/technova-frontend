@@ -1,8 +1,18 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { mockAdminUsers, type AdminUser, type AdminUserRole } from "@/lib/adminData";
+import { type AdminUser, type AdminUserRole } from "@/lib/adminData";
 import { apiFetch } from "@/lib/auth";
+
+interface AdminUserApi {
+  id: number;
+  name: string;
+  email: string;
+  role: AdminUserRole;
+  phone: string | null;
+  status: string;
+  created_at: string;
+}
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -13,6 +23,7 @@ export default function AdminUsers() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [successToast, setSuccessToast] = useState("");
+  const [loadError, setLoadError] = useState("");
 
   const [newUser, setNewUser] = useState<{
     name: string;
@@ -50,12 +61,11 @@ export default function AdminUsers() {
   };
 
   function loadUsers() {
-    setLoading(true);
-    apiFetch<any[]>("/users")
+    apiFetch<AdminUserApi[]>("/users")
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           const mapped: AdminUser[] = data.map((u) => ({
-            id: u.id,
+            id: String(u.id),
             name: u.name,
             email: u.email,
             role: (u.role || "Customer") as AdminUserRole,
@@ -64,13 +74,12 @@ export default function AdminUsers() {
             createdAt: u.created_at ? u.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
           }));
           setUsers(mapped);
-        } else {
-          setUsers(mockAdminUsers);
-        }
+        } else setUsers([]);
+        setLoadError("");
       })
       .catch((err) => {
-        console.warn("Failed to load users from database, using mock data:", err);
-        setUsers(mockAdminUsers);
+        setUsers([]);
+        setLoadError(err instanceof Error ? err.message : "Failed to load users.");
       })
       .finally(() => setLoading(false));
   }
@@ -93,7 +102,7 @@ export default function AdminUsers() {
   async function handleCreateUser(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const createdUser = await apiFetch<any>("/users", {
+      const createdUser = await apiFetch<AdminUserApi>("/users", {
         method: "POST",
         body: JSON.stringify({
           name: newUser.name.trim(),
@@ -101,12 +110,12 @@ export default function AdminUsers() {
           role: newUser.role,
           role_id: ROLE_ID_MAP[newUser.role],
           phone: newUser.phone.trim(),
-          tempPassword: newUser.tempPassword || "Temp@1234",
+          tempPassword: newUser.tempPassword,
         }),
       });
 
       const created: AdminUser = {
-        id: createdUser?.id || `usr-${Date.now()}`,
+        id: String(createdUser.id),
         name: createdUser?.name || newUser.name.trim(),
         email: createdUser?.email || newUser.email.trim(),
         role: (createdUser?.role || newUser.role) as AdminUserRole,
@@ -148,7 +157,7 @@ export default function AdminUsers() {
     e.preventDefault();
     if (!editingUser) return;
     try {
-      await apiFetch<any>(`/users/${editingUser.id}`, {
+      await apiFetch<AdminUserApi>(`/users/${editingUser.id}`, {
         method: "PATCH",
         body: JSON.stringify({
           name: editForm.name.trim(),
@@ -181,27 +190,27 @@ export default function AdminUsers() {
 
   async function toggleUserStatus(id: string) {
     try {
-      await apiFetch<any>(`/users/${id}/toggle-status`, { method: "PATCH" });
+      const updated = await apiFetch<AdminUserApi>(`/users/${id}/toggle-status`, { method: "PATCH" });
+      setUsers((current) =>
+        current.map((user) =>
+          user.id === id
+            ? { ...user, status: updated.status === "Inactive" ? "Inactive" : "Active" }
+            : user,
+        ),
+      );
+      return;
     } catch (err) {
-      console.warn("Toggle status via API failed, updating locally:", err);
+      alert(err instanceof Error ? err.message : "Failed to update user status.");
     }
-    setUsers(
-      users.map((u) =>
-        u.id === id
-          ? { ...u, status: u.status === "Active" ? "Inactive" : "Active" }
-          : u,
-      ),
-    );
-    setSuccessToast("User status updated.");
-    setTimeout(() => setSuccessToast(""), 3000);
   }
 
   async function handleDeleteUser(id: string, name: string) {
     if (!confirm(`Are you sure you want to delete user "${name}" from the database?`)) return;
     try {
-      await apiFetch<any>(`/users/${id}`, { method: "DELETE" });
+      await apiFetch<{ message: string }>(`/users/${id}`, { method: "DELETE" });
     } catch (err) {
-      console.warn("Delete API failed, removing locally:", err);
+      alert(err instanceof Error ? err.message : "Failed to delete user.");
+      return;
     }
     setUsers(users.filter((u) => u.id !== id));
     setSuccessToast(`User "${name}" deleted successfully.`);
@@ -234,6 +243,16 @@ export default function AdminUsers() {
       {successToast && (
         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-xs font-semibold text-emerald-400">
           ✓ {successToast}
+        </div>
+      )}
+      {loadError && (
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300">
+          Could not load users: {loadError}
+        </div>
+      )}
+      {loading && (
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-slate-300">
+          Loading users from the database...
         </div>
       )}
 

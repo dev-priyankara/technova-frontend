@@ -1,13 +1,25 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { type AdminSupplier, mockAdminSuppliers } from "@/lib/adminData";
+import { type AdminSupplier } from "@/lib/adminData";
 import { apiFetch } from "@/lib/auth";
 
+interface AdminSupplierApi {
+  id: number;
+  company_name: string;
+  contact_person: string;
+  email: string;
+  phone: string | null;
+  supplied_categories: string[];
+  pending_requests: number;
+  status: "Active" | "Pending Verification";
+}
+
 export default function AdminSuppliers() {
-  const [suppliers, setSuppliers] = useState<AdminSupplier[]>(mockAdminSuppliers);
+  const [suppliers, setSuppliers] = useState<AdminSupplier[]>([]);
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState("");
+  const [loadError, setLoadError] = useState("");
 
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -30,31 +42,31 @@ export default function AdminSuppliers() {
     requestedQty: 25,
     urgency: "Normal" as "Normal" | "Urgent Expedited",
     notes: "Consignment expected within 5 business days",
+    unitCost: 0,
   });
 
   useEffect(() => {
     let isMounted = true;
-    apiFetch<any[]>("/suppliers")
+    apiFetch<AdminSupplierApi[]>("/admin/suppliers")
       .then((data) => {
-        if (!isMounted || !Array.isArray(data) || data.length === 0) return;
+        if (!isMounted || !Array.isArray(data)) return;
         const mapped: AdminSupplier[] = data.map((s) => ({
-          id: s.id,
+          id: String(s.id),
           companyName: s.company_name,
           contactPerson: s.contact_person,
           email: s.email,
           phone: s.phone || "",
-          suppliedCategories:
-            typeof s.supplied_categories === "string"
-              ? s.supplied_categories.split(",").map((c: string) => c.trim())
-              : Array.isArray(s.supplied_categories)
-              ? s.supplied_categories
-              : ["Computer Hardware"],
+          suppliedCategories: s.supplied_categories,
           pendingRequests: s.pending_requests || 0,
-          status: s.status as any || "Active",
+          status: s.status || "Active",
         }));
         setSuppliers(mapped);
+        setLoadError("");
       })
-      .catch((err) => console.warn("Failed to load suppliers from database, using mock data:", err));
+      .catch((err) => {
+        setSuppliers([]);
+        setLoadError(err instanceof Error ? err.message : "Could not load suppliers.");
+      });
     return () => {
       isMounted = false;
     };
@@ -73,9 +85,10 @@ export default function AdminSuppliers() {
   async function handleDeleteSupplier(id: string, name: string) {
     if (!confirm(`Are you sure you want to remove supplier "${name}" from the system?`)) return;
     try {
-      await apiFetch<any>(`/suppliers/${id}`, { method: "DELETE" });
-    } catch {
-      // Local fallback
+      await apiFetch<{ message: string }>(`/admin/suppliers/${id}`, { method: "DELETE" });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete supplier.");
+      return;
     }
     setSuppliers((prev) => prev.filter((s) => s.id !== id));
     if (viewSupplier?.id === id) setViewSupplier(null);
@@ -90,19 +103,19 @@ export default function AdminSuppliers() {
   async function handleAddSupplier(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const created = await apiFetch<any>("/suppliers", {
+      const created = await apiFetch<AdminSupplierApi>("/admin/suppliers", {
         method: "POST",
         body: JSON.stringify({
           company_name: addForm.companyName.trim(),
           contact_person: addForm.contactPerson.trim(),
           email: addForm.email.trim(),
           phone: addForm.phone.trim(),
-          supplied_categories: addForm.category,
+          supplied_categories: addForm.category ? [addForm.category] : [],
         }),
       });
 
       const newSup: AdminSupplier = {
-        id: created.id || `sup-${Date.now()}`,
+        id: String(created.id),
         companyName: created.company_name || addForm.companyName.trim(),
         contactPerson: created.contact_person || addForm.contactPerson.trim(),
         email: created.email || addForm.email.trim(),
@@ -113,19 +126,9 @@ export default function AdminSuppliers() {
       };
 
       setSuppliers([newSup, ...suppliers]);
-    } catch {
-      // Local fallback
-      const fallbackSup: AdminSupplier = {
-        id: `sup-${Date.now()}`,
-        companyName: addForm.companyName.trim(),
-        contactPerson: addForm.contactPerson.trim(),
-        email: addForm.email.trim(),
-        phone: addForm.phone.trim(),
-        suppliedCategories: [addForm.category],
-        pendingRequests: 0,
-        status: "Active",
-      };
-      setSuppliers([fallbackSup, ...suppliers]);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to onboard supplier.");
+      return;
     }
 
     setIsAddModalOpen(false);
@@ -140,18 +143,21 @@ export default function AdminSuppliers() {
     if (!editSupplier) return;
 
     try {
-      await apiFetch(`/suppliers/${editSupplier.id}`, {
+      await apiFetch(`/admin/suppliers/${editSupplier.id}`, {
         method: "PATCH",
         body: JSON.stringify({
           company_name: editSupplier.companyName.trim(),
           contact_person: editSupplier.contactPerson.trim(),
           email: editSupplier.email.trim(),
           phone: editSupplier.phone.trim(),
-          supplied_categories: editSupplier.suppliedCategories.join(", "),
+          supplied_categories: editSupplier.suppliedCategories,
           status: editSupplier.status,
         }),
       });
-    } catch {}
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update supplier.");
+      return;
+    }
 
     setSuppliers((prev) =>
       prev.map((s) => (s.id === editSupplier.id ? { ...editSupplier } : s)),
@@ -162,22 +168,34 @@ export default function AdminSuppliers() {
   }
 
   // SUBMIT PURCHASE ORDER (PO)
-  function handleSendPurchaseOrder(e: React.FormEvent) {
+  async function handleSendPurchaseOrder(e: React.FormEvent) {
     e.preventDefault();
     if (!poSupplier) return;
-
-    const updatedRequests = (poSupplier.pendingRequests || 0) + 1;
-    setSuppliers((prev) =>
-      prev.map((s) =>
-        s.id === poSupplier.id ? { ...s, pendingRequests: updatedRequests } : s,
-      ),
-    );
-
-    setToast(
-      `Purchase Order #${Date.now().toString().slice(-5)} (${poForm.requestedQty} units, ${poForm.urgency}) dispatched to ${poSupplier.companyName}!`,
-    );
-    setPoSupplier(null);
-    setTimeout(() => setToast(""), 4500);
+    try {
+      const saved = await apiFetch<{ po_number: string }>("/admin/purchase-orders", {
+        method: "POST",
+        body: JSON.stringify({
+          supplier_id: Number(poSupplier.id),
+          product_name: poForm.itemCategory,
+          quantity: poForm.requestedQty,
+          unit_cost: poForm.unitCost,
+          urgency: poForm.urgency,
+          notes: poForm.notes,
+        }),
+      });
+      setSuppliers((prev) =>
+        prev.map((supplier) =>
+          supplier.id === poSupplier.id
+            ? { ...supplier, pendingRequests: supplier.pendingRequests + 1 }
+            : supplier,
+        ),
+      );
+      setToast(`Purchase Order ${saved.po_number} sent to ${poSupplier.companyName}.`);
+      setPoSupplier(null);
+      setTimeout(() => setToast(""), 4500);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to create purchase order.");
+    }
   }
 
   return (
@@ -207,6 +225,11 @@ export default function AdminSuppliers() {
       {toast && (
         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-xs font-semibold text-emerald-400">
           ✓ {toast}
+        </div>
+      )}
+      {loadError && (
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300">
+          Could not load suppliers: {loadError}
         </div>
       )}
 
@@ -335,6 +358,7 @@ export default function AdminSuppliers() {
                         requestedQty: 25,
                         urgency: "Normal",
                         notes: "Standard warehouse restock consignment",
+                        unitCost: 0,
                       });
                     }}
                     className="rounded-xl bg-blue-600/90 py-2 text-xs font-bold text-white hover:bg-blue-600 transition-all text-center shadow-md shadow-blue-600/20"
@@ -592,16 +616,29 @@ export default function AdminSuppliers() {
                 </div>
 
                 <div>
+                  <label className="block text-slate-300 font-bold mb-1">Estimated Unit Cost (LKR)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                    value={poForm.unitCost}
+                    onChange={(e) => setPoForm({ ...poForm, unitCost: Number(e.target.value) })}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white font-mono focus:border-blue-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
                   <label className="block text-slate-300 font-bold mb-1">Shipping Priority</label>
                   <select
                     value={poForm.urgency}
-                    onChange={(e) => setPoForm({ ...poForm, urgency: e.target.value as any })}
+                    onChange={(e) => setPoForm({ ...poForm, urgency: e.target.value as typeof poForm.urgency })}
                     className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white focus:border-blue-400 focus:outline-none"
                   >
                     <option value="Normal">Normal Sea/Air Freight</option>
                     <option value="Urgent Expedited">⚡ Urgent Expedited Air Freight</option>
                   </select>
-                </div>
               </div>
 
               <div>

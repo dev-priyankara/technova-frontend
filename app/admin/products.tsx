@@ -5,11 +5,24 @@ import {
   type AdminProduct,
   type AdminCategory,
   type TimeFilterPeriod,
-  mockAdminProducts,
-  mockAdminCategories,
   isDateInPeriod,
 } from "@/lib/adminData";
 import { apiFetch } from "@/lib/auth";
+import type { CategoryRecord } from "@/lib/categories";
+
+interface AdminProductApi {
+  id: number;
+  name: string;
+  category: string;
+  category_name: string;
+  sku: string;
+  cost_price: number;
+  price: number;
+  stock_count: number;
+  min_stock_level: number;
+  specs: string[] | null;
+  created_at: string;
+}
 
 export default function AdminProducts() {
   const [products, setProducts] = useState<AdminProduct[]>([]);
@@ -20,6 +33,7 @@ export default function AdminProducts() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   const [form, setForm] = useState<{
     name: string;
@@ -32,7 +46,7 @@ export default function AdminProducts() {
     specs: string;
   }>({
     name: "",
-    category: "Laptops",
+    category: "",
     sku: "",
     costPrice: 0,
     sellingPrice: 0,
@@ -75,7 +89,7 @@ export default function AdminProducts() {
     e.preventDefault();
     if (!editingProduct) return;
     try {
-      await apiFetch<any>(`/products/${editingProduct.id}`, {
+      await apiFetch<AdminProductApi>(`/products/${editingProduct.id}`, {
         method: "PATCH",
         body: JSON.stringify({
           name: editForm.name.trim(),
@@ -118,15 +132,15 @@ export default function AdminProducts() {
   }
 
   function loadData() {
-    setLoading(true);
-    Promise.all([
-      apiFetch<any[]>("/products"),
-      apiFetch<any[]>("/categories"),
+    Promise.allSettled([
+      apiFetch<AdminProductApi[]>("/products"),
+      apiFetch<CategoryRecord[]>("/categories"),
     ])
-      .then(([prods, cats]) => {
-        if (Array.isArray(prods) && prods.length > 0) {
+      .then(([productsResult, categoriesResult]) => {
+        if (productsResult.status === "fulfilled" && Array.isArray(productsResult.value)) {
+          const prods = productsResult.value;
           const mappedProds: AdminProduct[] = prods.map((p) => ({
-            id: p.id,
+            id: String(p.id),
             name: p.name,
             category: p.category,
             sku: p.sku,
@@ -141,34 +155,32 @@ export default function AdminProducts() {
                 : p.stock_count <= (p.min_stock_level || 3)
                 ? "Low Stock"
                 : "In Stock",
-            createdAt: p.created_at ? p.created_at.split("T")[0] : (p.createdAt || new Date().toISOString().split("T")[0]),
+            createdAt: p.created_at ? p.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
           }));
           setProducts(mappedProds);
         } else {
-          setProducts(mockAdminProducts);
+          setProducts([]);
+          setLoadError("Could not load products from the database.");
         }
-        if (Array.isArray(cats) && cats.length > 0) {
-          const mappedCats: AdminCategory[] = cats.map((c) => ({
-            id: c.id,
-            name: c.name,
-            description: c.description,
-            itemCount: c.item_count,
-            slug: c.slug,
+        if (categoriesResult.status === "fulfilled" && Array.isArray(categoriesResult.value)) {
+          const mappedCats: AdminCategory[] = categoriesResult.value.map((category) => ({
+            id: String(category.id),
+            name: category.name,
+            description: category.description ?? "",
+            itemCount: category.item_count,
+            slug: category.slug,
           }));
           setCategories(mappedCats);
-          if (mappedCats.length > 0) {
-            setForm((prev) => ({ ...prev, category: mappedCats[0].name }));
-          }
+          setForm((prev) => ({ ...prev, category: mappedCats[0]?.name ?? "" }));
         } else {
-          setCategories(mockAdminCategories);
-          setForm((prev) => ({ ...prev, category: mockAdminCategories[0].name }));
+          setLoadError("Could not load product categories from the database.");
+          setCategories([]);
+          setForm((prev) => ({ ...prev, category: "" }));
         }
       })
       .catch((err) => {
-        console.warn("Failed to load products/categories from database, using mock data:", err);
-        setProducts(mockAdminProducts);
-        setCategories(mockAdminCategories);
-        setForm((prev) => ({ ...prev, category: mockAdminCategories[0].name }));
+        setLoadError(err instanceof Error ? err.message : "Could not load products.");
+        setProducts([]);
       })
       .finally(() => setLoading(false));
   }
@@ -195,7 +207,7 @@ export default function AdminProducts() {
   async function handleAddProduct(e: React.FormEvent) {
     e.preventDefault();
     try {
-      const created = await apiFetch<any>("/products", {
+      const created = await apiFetch<AdminProductApi>("/products", {
         method: "POST",
         body: JSON.stringify({
           name: form.name.trim(),
@@ -213,7 +225,7 @@ export default function AdminProducts() {
 
       const todayStr = new Date().toISOString().split("T")[0];
       const newProd: AdminProduct = {
-        id: created.id,
+        id: String(created.id),
         name: created.name,
         category: created.category,
         sku: created.sku,
@@ -230,7 +242,7 @@ export default function AdminProducts() {
       setIsModalOpen(false);
       setForm({
         name: "",
-        category: categories[0]?.name || "Laptops",
+        category: categories[0]?.name ?? "",
         sku: "",
         costPrice: 0,
         sellingPrice: 0,
@@ -248,7 +260,7 @@ export default function AdminProducts() {
   async function handleDeleteProduct(id: string, name: string) {
     if (!confirm(`Are you sure you want to deactivate/delete product "${name}" from the database?`)) return;
     try {
-      await apiFetch<any>(`/products/${id}`, { method: "DELETE" });
+      await apiFetch<{ message: string }>(`/products/${id}`, { method: "DELETE" });
       setProducts(products.filter((p) => p.id !== id));
       setToast(`Product "${name}" deleted successfully.`);
       setTimeout(() => setToast(""), 3500);
@@ -285,6 +297,16 @@ export default function AdminProducts() {
       {toast && (
         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-xs font-semibold text-emerald-400">
           ✓ {toast}
+        </div>
+      )}
+      {loadError && (
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300">
+          {loadError}
+        </div>
+      )}
+      {loading && (
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-xs text-slate-300">
+          Loading products from the database...
         </div>
       )}
 
@@ -581,14 +603,23 @@ export default function AdminProducts() {
                 <div>
                   <label className="block font-semibold text-slate-300 mb-1">Category</label>
                   <select
+                    required
                     value={form.category}
                     onChange={(e) => setForm({ ...form, category: e.target.value })}
                     className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2.5 text-white focus:border-blue-400 focus:outline-none"
                   >
+                    <option value="" disabled>
+                      {categories.length ? "Select a category" : "Add a category first"}
+                    </option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.name}>{c.name}</option>
                     ))}
                   </select>
+                  {categories.length === 0 && (
+                    <p className="mt-1 text-[10px] text-amber-300">
+                      Create a category in Category Management before adding products.
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -673,7 +704,8 @@ export default function AdminProducts() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-blue-600 py-2.5 font-bold text-white hover:bg-blue-500 shadow-lg shadow-blue-600/30"
+                  disabled={categories.length === 0}
+                  className="flex-1 rounded-xl bg-blue-600 py-2.5 font-bold text-white shadow-lg shadow-blue-600/30 enabled:hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Add to Catalogue
                 </button>
@@ -792,7 +824,7 @@ export default function AdminProducts() {
                 <label className="block font-semibold text-slate-300 mb-1">Stock Status</label>
                 <select
                   value={editForm.status}
-                  onChange={(e) => setEditForm({ ...editForm, status: e.target.value as any })}
+                  onChange={(e) => setEditForm({ ...editForm, status: e.target.value as AdminProduct["status"] })}
                   className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white focus:border-blue-400 focus:outline-none"
                 >
                   <option value="In Stock">In Stock</option>
@@ -833,4 +865,3 @@ export default function AdminProducts() {
     </div>
   );
 }
-

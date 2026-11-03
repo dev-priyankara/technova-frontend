@@ -15,7 +15,8 @@ import AdminSuppliers from "./suppliers";
 import AdminCustomers from "./customers";
 import AdminReports from "./reports";
 import AdminAIMonitoring from "./aiMonitoring";
-import AdminProfile, { getStoredAdminProfile, type AdminProfileData } from "./profile";
+import AdminProfile, { type AdminProfileData } from "./profile";
+import { apiFetch, clearSession, getSession } from "@/lib/auth";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -23,28 +24,51 @@ export default function AdminPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [headerName, setHeaderName] = useState("Kasun Silva");
   const [headerAvatar, setHeaderAvatar] = useState("");
+  const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
-    function loadProfile() {
-      const stored = getStoredAdminProfile();
-      if (stored) {
-        setHeaderName(stored.name || "Kasun Silva");
-        setHeaderAvatar(stored.avatarUrl || "");
-      }
+    const session = getSession();
+    if (!session) {
+      router.replace("/login");
+      return;
     }
-    loadProfile();
+    if (session.role !== "Admin") {
+      router.replace(
+        session.role === "Cashier"
+          ? "/cashier"
+          : session.role === "Supplier"
+            ? "/supplier"
+            : "/customer",
+      );
+      return;
+    }
+    let active = true;
+    apiFetch<{ name: string; avatar_url: string | null }>("/admin/profile")
+      .then((profile) => {
+        if (!active) return;
+        setHeaderName(profile.name || "Kasun Silva");
+        setHeaderAvatar(profile.avatar_url || "");
+        setAuthReady(true);
+      })
+      .catch(() => {
+        if (!active) return;
+        clearSession();
+        router.replace("/login");
+      });
 
-    function handleUpdate(e: any) {
-      if (e.detail) {
-        setHeaderName(e.detail.name || "Kasun Silva");
-        setHeaderAvatar(e.detail.avatarUrl || "");
+    function handleUpdate(event: Event) {
+      const { detail } = event as CustomEvent<AdminProfileData>;
+      if (detail) {
+        setHeaderName(detail.name || "Kasun Silva");
+        setHeaderAvatar(detail.avatarUrl || "");
       }
     }
     window.addEventListener("admin_profile_updated", handleUpdate);
     return () => {
+      active = false;
       window.removeEventListener("admin_profile_updated", handleUpdate);
     };
-  }, []);
+  }, [router]);
 
   function getInitials(nameStr: string): string {
     const parts = nameStr.trim().split(" ");
@@ -55,6 +79,7 @@ export default function AdminPage() {
   }
 
   function handleLogout() {
+    clearSession();
     router.push("/login");
   }
 
@@ -64,6 +89,8 @@ export default function AdminPage() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }
+
+  if (!authReady) return null;
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col lg:flex-row">

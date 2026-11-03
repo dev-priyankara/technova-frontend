@@ -29,7 +29,15 @@ export default function LoginPage() {
     try {
       const customer = await loginCustomer(email, password);
       setSession(customer);
-      router.push("/");
+      const destination =
+        customer.role === "Admin"
+          ? "/admin"
+          : customer.role === "Cashier"
+            ? "/cashier"
+            : customer.role === "Supplier"
+              ? "/supplier"
+              : "/customer";
+      router.push(destination);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Login failed. Please try again.",

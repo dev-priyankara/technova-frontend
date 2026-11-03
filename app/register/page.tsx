@@ -25,8 +25,6 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -34,23 +32,14 @@ export default function RegisterPage() {
     event.preventDefault();
     setError("");
 
-    if (!name.trim() || !email.trim() || !password) {
-      setError("Please fill in your name, email and password.");
+    if (!name.trim() || !email.trim()) {
+      setError("Please enter your name and email address.");
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setError("Please enter a valid email address.");
       return;
     }
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-
     setLoading(true);
     try {
       const verificationCode = generateVerificationCode();
@@ -58,7 +47,6 @@ export default function RegisterPage() {
         name,
         email: email.trim(),
         phone,
-        password,
         verification_code: verificationCode,
       });
 
@@ -163,47 +151,6 @@ export default function RegisterPage() {
                   value={phone}
                   onChange={(event) => setPhone(event.target.value)}
                   placeholder="+94 77 123 4567"
-                  className={inputClass}
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-semibold text-white"
-                >
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  minLength={6}
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="At least 6 characters"
-                  className={inputClass}
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="confirmPassword"
-                  className="block text-sm font-semibold text-white"
-                >
-                  Confirm password
-                </label>
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
-                  placeholder="Repeat your password"
                   className={inputClass}
                 />
               </div>

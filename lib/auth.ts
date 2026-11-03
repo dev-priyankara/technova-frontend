@@ -13,7 +13,7 @@ export type Customer = {
 };
 
 type CustomerResponse = {
-  id: string;
+  id: string | number;
   name: string;
   email: string;
   phone?: string;
@@ -26,8 +26,11 @@ type CustomerResponse = {
   access_token?: string;
 };
 
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+const configuredApiUrl =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
+export const API_URL = configuredApiUrl
+  .replace(/\/api\/v1\/?$/, "/api")
+  .replace(/\/+$/, "");
 const SESSION_KEY = "technova_session";
 const PENDING_REGISTRATION_KEY = "technova_pending_registration";
 
@@ -35,7 +38,6 @@ export interface PendingRegistration {
   name: string;
   email: string;
   phone: string;
-  password: string;
   verification_code: string;
 }
 
@@ -49,7 +51,22 @@ export function getPendingRegistration(): PendingRegistration | null {
   try {
     const raw = localStorage.getItem(PENDING_REGISTRATION_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as PendingRegistration;
+    const stored = JSON.parse(raw) as Partial<PendingRegistration>;
+    if (
+      typeof stored.name !== "string" ||
+      typeof stored.email !== "string" ||
+      typeof stored.verification_code !== "string"
+    ) {
+      return null;
+    }
+    const pending: PendingRegistration = {
+      name: stored.name,
+      email: stored.email,
+      phone: typeof stored.phone === "string" ? stored.phone : "",
+      verification_code: stored.verification_code,
+    };
+    localStorage.setItem(PENDING_REGISTRATION_KEY, JSON.stringify(pending));
+    return pending;
   } catch {
     return null;
   }
@@ -60,19 +77,15 @@ export function clearPendingRegistration(): void {
   localStorage.removeItem(PENDING_REGISTRATION_KEY);
 }
 
-export async function apiFetch<T = any>(
+export async function apiFetch<T = unknown>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const session = getSession();
   const headers = new Headers(options.headers || {});
+  headers.set("X-Requested-With", "TECHNOVA");
 
   if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
-  }
-
-  if (session?.token && !headers.has("Authorization")) {
-    headers.set("Authorization", `Bearer ${session.token}`);
   }
 
   const response = await fetch(`${API_URL}${endpoint}`, {
@@ -98,7 +111,7 @@ export async function apiFetch<T = any>(
 
 async function authRequest(
   endpoint: string,
-  body?: Record<string, any>,
+  body?: Record<string, unknown>,
 ): Promise<Customer> {
   const payload = await apiFetch<CustomerResponse>(endpoint, {
     method: "POST",
@@ -110,7 +123,7 @@ async function authRequest(
   }
 
   return {
-    id: payload.id,
+    id: String(payload.id),
     name: payload.name,
     email: payload.email,
     phone: payload.phone || "",
@@ -150,7 +163,7 @@ export async function updateCustomerProfile(data: {
 
   const session = getSession();
   const updated: Customer = {
-    id: payload.id,
+    id: String(payload.id),
     name: payload.name,
     email: payload.email,
     phone: payload.phone || "",
@@ -216,6 +229,7 @@ export function clearSession(): void {
   void fetch(`${API_URL}/auth/logout`, {
     method: "POST",
     credentials: "include",
+    headers: { "X-Requested-With": "TECHNOVA" },
   }).catch((error: unknown) => {
     console.error("Unable to clear the backend login cookie.", error);
   });

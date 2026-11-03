@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { apiFetch } from "@/lib/auth";
 
 export interface AdminProfileData {
   name: string;
@@ -11,6 +12,17 @@ export interface AdminProfileData {
   city: string;
   postalCode: string;
   avatarUrl: string;
+}
+
+interface AdminProfileApi {
+  name: string;
+  email: string;
+  phone: string | null;
+  role: string;
+  street: string | null;
+  city: string | null;
+  postal_code: string | null;
+  avatar_url: string | null;
 }
 
 const DEFAULT_ADMIN_PROFILE: AdminProfileData = {
@@ -73,9 +85,28 @@ export default function AdminProfile({ onProfileUpdate }: AdminProfileProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const stored = getStoredAdminProfile();
-    setProfile(stored);
-    setAvatarPreview(stored.avatarUrl);
+    apiFetch<AdminProfileApi>("/admin/profile")
+      .then((data) => {
+        const loaded: AdminProfileData = {
+          name: data.name,
+          email: data.email,
+          phone: data.phone || "",
+          role: data.role || DEFAULT_ADMIN_PROFILE.role,
+          street: data.street || "",
+          city: data.city || "",
+          postalCode: data.postal_code || "",
+          avatarUrl: data.avatar_url || "",
+        };
+        setProfile(loaded);
+        setAvatarPreview(loaded.avatarUrl);
+        saveStoredAdminProfile(loaded);
+      })
+      .catch((err) => {
+        const stored = getStoredAdminProfile();
+        setProfile(stored);
+        setAvatarPreview(stored.avatarUrl);
+        showToast(err instanceof Error ? err.message : "Could not load profile from the database.", "error");
+      });
   }, []);
 
   function showToast(msg: string, type: "success" | "error" = "success") {
@@ -126,7 +157,7 @@ export default function AdminProfile({ onProfileUpdate }: AdminProfileProps) {
   }
 
   // Handle Profile Details Save
-  function handleSaveProfile(e: React.FormEvent) {
+  async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
     if (!profile.name.trim()) {
       showToast("Please enter a valid full name.", "error");
@@ -150,25 +181,39 @@ export default function AdminProfile({ onProfileUpdate }: AdminProfileProps) {
       avatarUrl: avatarPreview,
     };
 
-    saveStoredAdminProfile(updated);
-    setProfile(updated);
-    onProfileUpdate?.(updated);
-
-    setTimeout(() => {
+    try {
+      await apiFetch("/admin/profile", {
+        method: "PUT",
+        body: JSON.stringify({
+          name: updated.name,
+          email: updated.email,
+          phone: updated.phone,
+          street: updated.street,
+          city: updated.city,
+          postal_code: updated.postalCode,
+          avatar_url: updated.avatarUrl,
+        }),
+      });
+      saveStoredAdminProfile(updated);
+      setProfile(updated);
+      onProfileUpdate?.(updated);
       setIsSaving(false);
       showToast("Admin profile details and photo saved successfully!");
-    }, 400);
+    } catch (err) {
+      setIsSaving(false);
+      showToast(err instanceof Error ? err.message : "Failed to save profile.", "error");
+    }
   }
 
   // Handle Password Update
-  function handleSavePassword(e: React.FormEvent) {
+  async function handleSavePassword(e: React.FormEvent) {
     e.preventDefault();
     if (!currentPassword) {
       showPassToast("Please enter your current password.", "error");
       return;
     }
-    if (newPassword.length < 6) {
-      showPassToast("New password must be at least 6 characters long.", "error");
+    if (newPassword.length < 8) {
+      showPassToast("New password must be at least 8 characters long.", "error");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -176,10 +221,21 @@ export default function AdminProfile({ onProfileUpdate }: AdminProfileProps) {
       return;
     }
 
-    showPassToast("Security password updated successfully!");
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
+    try {
+      await apiFetch("/admin/password", {
+        method: "PUT",
+        body: JSON.stringify({
+          current_password: currentPassword,
+          new_password: newPassword,
+        }),
+      });
+      showPassToast("Security password updated successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      showPassToast(err instanceof Error ? err.message : "Failed to update password.", "error");
+    }
   }
 
   function getInitials(nameStr: string): string {
@@ -469,7 +525,7 @@ export default function AdminProfile({ onProfileUpdate }: AdminProfileProps) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-slate-300 font-semibold mb-1">
-                    New Password (min 6 chars)
+                    New Password (min 8 chars)
                   </label>
                   <input
                     type={showPasswords ? "text" : "password"}
@@ -519,4 +575,3 @@ export default function AdminProfile({ onProfileUpdate }: AdminProfileProps) {
     </div>
   );
 }
-

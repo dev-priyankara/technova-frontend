@@ -1,18 +1,45 @@
 "use client";
 
-import React, { useState } from "react";
-import {
-  mockAdminPOSTransactions,
-  type AdminPOSTransaction,
-} from "@/lib/adminData";
+import React, { useEffect, useState } from "react";
+import { type AdminPOSTransaction } from "@/lib/adminData";
+import { apiFetch } from "@/lib/auth";
+
+interface POSSaleApi {
+  id: number;
+  receipt_no: string;
+  date: string;
+  cashier_name: string;
+  subtotal: number;
+  discount: number;
+  final_amount: number;
+  payment_method: AdminPOSTransaction["paymentMethod"];
+  items_count: number;
+}
 
 export default function AdminSales() {
-  const [transactions, setTransactions] = useState<AdminPOSTransaction[]>(mockAdminPOSTransactions);
+  const [transactions, setTransactions] = useState<AdminPOSTransaction[]>([]);
   const [selectedTx, setSelectedTx] = useState<AdminPOSTransaction | null>(null);
   const [editTx, setEditTx] = useState<AdminPOSTransaction | null>(null);
   const [isNewSaleOpen, setIsNewSaleOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState("");
+
+  useEffect(() => {
+    apiFetch<POSSaleApi[]>("/admin/pos/sales")
+      .then((data) => setTransactions(data.map((tx) => ({
+        id: String(tx.id),
+        receiptNo: tx.receipt_no,
+        date: String(tx.date).split("T")[0],
+        time: new Date(tx.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        cashierName: tx.cashier_name || "",
+        subtotal: Number(tx.subtotal),
+        discount: Number(tx.discount),
+        finalAmount: Number(tx.final_amount),
+        paymentMethod: tx.payment_method,
+        itemsCount: Number(tx.items_count),
+      }))))
+      .catch((err) => alert(err instanceof Error ? err.message : "Failed to load POS transactions."));
+  }, []);
 
   // New Sale Form
   const [newSaleForm, setNewSaleForm] = useState({
@@ -36,51 +63,71 @@ export default function AdminSales() {
   const totalCount = transactions.length;
 
   // CREATE POS SALE
-  function handleCreateSale(e: React.FormEvent) {
+  async function handleCreateSale(e: React.FormEvent) {
     e.preventDefault();
     const subtotal = Number(newSaleForm.subtotal) || 0;
-    // 2% discount if subtotal > 400,000 LKR
-    const discount = subtotal > 400000 ? Math.round(subtotal * 0.02) : 0;
-    const finalAmount = Math.max(0, subtotal - discount);
-
-    const now = new Date();
-    const newTx: AdminPOSTransaction = {
-      id: `tx-${Date.now()}`,
-      receiptNo: `POS-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-      date: now.toISOString().split("T")[0],
-      time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      cashierName: newSaleForm.cashierName.trim(),
-      subtotal: subtotal,
-      discount: discount,
-      finalAmount: finalAmount,
-      paymentMethod: newSaleForm.paymentMethod,
-      itemsCount: Number(newSaleForm.itemsCount) || 1,
-    };
-
-    setTransactions([newTx, ...transactions]);
-    setIsNewSaleOpen(false);
-    setToast(`Receipt ${newTx.receiptNo} settled! Net Amount: Rs. ${finalAmount.toLocaleString("en-LK")}`);
-    setTimeout(() => setToast(""), 3500);
+    try {
+      const saved = await apiFetch<POSSaleApi>("/admin/pos/sales", {
+        method: "POST",
+        body: JSON.stringify({
+          cashier_name: newSaleForm.cashierName.trim(),
+          subtotal,
+          items_count: Number(newSaleForm.itemsCount),
+          payment_method: newSaleForm.paymentMethod,
+        }),
+      });
+      const newTx: AdminPOSTransaction = {
+        id: String(saved.id),
+        receiptNo: saved.receipt_no,
+        date: String(saved.date).split("T")[0],
+        time: new Date(saved.date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        cashierName: saved.cashier_name,
+        subtotal: Number(saved.subtotal),
+        discount: Number(saved.discount),
+        finalAmount: Number(saved.final_amount),
+        paymentMethod: saved.payment_method,
+        itemsCount: Number(saved.items_count),
+      };
+      setTransactions((current) => [newTx, ...current]);
+      setIsNewSaleOpen(false);
+      setToast(`Receipt ${newTx.receiptNo} settled! Net Amount: Rs. ${newTx.finalAmount.toLocaleString("en-LK")}`);
+      setTimeout(() => setToast(""), 3500);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to record POS sale.");
+    }
   }
 
   // UPDATE SALE
-  function handleSaveEdit(e: React.FormEvent) {
+  async function handleSaveEdit(e: React.FormEvent) {
     e.preventDefault();
     if (!editTx) return;
-
-    setTransactions((prev) =>
-      prev.map((tx) => (tx.id === editTx.id ? { ...editTx } : tx)),
-    );
-
-    setToast(`Transaction ${editTx.receiptNo} updated.`);
-    setEditTx(null);
-    setTimeout(() => setToast(""), 3500);
+    try {
+      await apiFetch(`/admin/pos/sales/${editTx.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          cashier_name: editTx.cashierName,
+          payment_method: editTx.paymentMethod,
+          items_count: editTx.itemsCount,
+        }),
+      });
+      setTransactions((prev) => prev.map((tx) => (tx.id === editTx.id ? { ...editTx } : tx)));
+      setToast(`Transaction ${editTx.receiptNo} updated.`);
+      setEditTx(null);
+      setTimeout(() => setToast(""), 3500);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update POS transaction.");
+    }
   }
 
   // DELETE / VOID SALE
-  function handleVoidSale(tx: AdminPOSTransaction) {
+  async function handleVoidSale(tx: AdminPOSTransaction) {
     if (!confirm(`Are you sure you want to VOID receipt "${tx.receiptNo}" (Rs. ${tx.finalAmount.toLocaleString("en-LK")})? This action cannot be undone.`)) return;
-
+    try {
+      await apiFetch(`/admin/pos/sales/${tx.id}/void`, { method: "POST" });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to void POS transaction.");
+      return;
+    }
     setTransactions((prev) => prev.filter((t) => t.id !== tx.id));
     if (selectedTx?.id === tx.id) setSelectedTx(null);
     if (editTx?.id === tx.id) setEditTx(null);
@@ -429,7 +476,7 @@ export default function AdminSales() {
                 <label className="block text-slate-300 font-bold mb-1">Payment Method</label>
                 <select
                   value={editTx.paymentMethod}
-                  onChange={(e) => setEditTx({ ...editTx, paymentMethod: e.target.value as any })}
+                  onChange={(e) => setEditTx({ ...editTx, paymentMethod: e.target.value as AdminPOSTransaction["paymentMethod"] })}
                   className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white focus:border-blue-400 focus:outline-none"
                 >
                   <option value="Cash">Cash</option>
@@ -556,7 +603,7 @@ export default function AdminSales() {
                 <label className="block text-slate-300 font-bold mb-1">Payment Method</label>
                 <select
                   value={newSaleForm.paymentMethod}
-                  onChange={(e) => setNewSaleForm({ ...newSaleForm, paymentMethod: e.target.value as any })}
+                  onChange={(e) => setNewSaleForm({ ...newSaleForm, paymentMethod: e.target.value as AdminPOSTransaction["paymentMethod"] })}
                   className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white focus:border-blue-400 focus:outline-none"
                 >
                   <option value="Cash">Cash Counter</option>

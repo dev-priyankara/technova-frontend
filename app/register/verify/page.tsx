@@ -9,33 +9,33 @@ import {
   registerCustomer,
   setPendingRegistration,
   setSession,
-  type PendingRegistration,
 } from "@/lib/auth";
 import { sendVerificationEmail } from "@/lib/emailjs";
 
 const inputClass =
   "mt-1.5 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-center text-2xl tracking-[0.5em] text-white outline-none placeholder:text-slate-400 focus:border-blue-400/60 focus:bg-white/10";
+const passwordInputClass =
+  "mt-1.5 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-400 focus:border-blue-400/60 focus:bg-white/10";
 
 export default function VerifyEmailPage() {
   const router = useRouter();
   const [code, setCode] = useState("");
-  const [pending, setPending] = useState<PendingRegistration | null>(null);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
 
   useEffect(() => {
-    const data = getPendingRegistration();
-    if (!data) {
+    if (!getPendingRegistration()) {
       router.replace("/register");
-    } else {
-      setPending(data);
     }
   }, [router]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    const pending = getPendingRegistration();
     if (!pending) return;
 
     if (!/^\d{6}$/.test(code)) {
@@ -47,6 +47,14 @@ export default function VerifyEmailPage() {
       setError("The verification code you entered is incorrect.");
       return;
     }
+    if (password.length < 8 || password.length > 128) {
+      setError("Password must be between 8 and 128 characters.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -54,7 +62,7 @@ export default function VerifyEmailPage() {
         name: pending.name,
         email: pending.email,
         phone: pending.phone,
-        password: pending.password,
+        password,
       });
       setSession(customer);
       clearPendingRegistration();
@@ -71,6 +79,7 @@ export default function VerifyEmailPage() {
   }
 
   async function handleResend() {
+    const pending = getPendingRegistration();
     if (!pending) return;
     setResending(true);
     setError("");
@@ -79,7 +88,6 @@ export default function VerifyEmailPage() {
         { length: 6 },
         () => String.fromCharCode(48 + Math.floor(Math.random() * 10)),
       ).join("");
-      setPending({ ...pending, verification_code: newCode });
       setPendingRegistration({ ...pending, verification_code: newCode });
       await sendVerificationEmail({
         to_email: pending.email,
@@ -98,12 +106,6 @@ export default function VerifyEmailPage() {
     }
   }
 
-  if (!pending) {
-    return null;
-  }
-
-  const maskedEmail = pending.email.replace(/^([^@]{1}).*?(@.*)$/, "$1***$2");
-
   return (
     <>
       <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
@@ -120,8 +122,7 @@ export default function VerifyEmailPage() {
                 Verify your email
               </h1>
               <p className="mt-2 text-sm text-slate-300">
-                We sent a 6-digit verification code to{" "}
-                <span className="font-semibold text-white">{maskedEmail}</span>.
+                Enter the 6-digit code sent to your email address.
               </p>
             </div>
 
@@ -157,6 +158,48 @@ export default function VerifyEmailPage() {
                 />
               </div>
 
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-semibold text-white"
+                >
+                  Create password
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                  maxLength={128}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="8-128 characters"
+                  className={passwordInputClass}
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-sm font-semibold text-white"
+                >
+                  Confirm password
+                </label>
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  placeholder="Repeat your password"
+                  className={passwordInputClass}
+                />
+              </div>
+
               <button
                 type="submit"
                 disabled={loading}
@@ -167,7 +210,7 @@ export default function VerifyEmailPage() {
             </form>
 
             <p className="mt-6 text-center text-sm text-slate-300">
-              Didn't receive the code?{" "}
+              Didn&apos;t receive the code?{" "}
               <button
                 type="button"
                 onClick={handleResend}
