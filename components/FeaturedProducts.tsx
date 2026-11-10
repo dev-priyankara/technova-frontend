@@ -380,8 +380,25 @@ export default function FeaturedProducts({
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
+    type BackendProduct = {
+      id: string | number;
+      name: string;
+      category?: string;
+      brand?: string;
+      price: number;
+      original_price?: number;
+      in_stock: boolean;
+      stock_count?: number;
+      badge?: string;
+      rating?: number;
+      reviews?: number;
+      specs?: string[];
+      description?: string;
+      warranty?: string;
+    };
+
     let isMounted = true;
-    apiFetch<any[]>("/products")
+    apiFetch<BackendProduct[]>("/products")
       .then((data) => {
         if (!isMounted || !Array.isArray(data) || data.length === 0) return;
         const mapped: Product[] = data.map((p) => ({

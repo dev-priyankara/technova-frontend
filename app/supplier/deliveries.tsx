@@ -179,7 +179,7 @@ export default function SupplierDeliveries() {
                 <span className="text-[11px] text-slate-400">Update Status:</span>
                 <select
                   value={dsp.status}
-                  onChange={(e) => updateStatus(dsp.id, e.target.value as any)}
+                  onChange={(e) => updateStatus(dsp.id, e.target.value as DeliveryDispatch["status"])}
                   className="rounded-xl border border-white/10 bg-slate-950 px-3 py-1.5 text-xs font-bold text-white outline-none focus:border-blue-400"
                 >
                   <option value="Preparing Dispatch">Preparing Dispatch</option>

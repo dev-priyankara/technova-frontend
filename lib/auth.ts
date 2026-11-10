@@ -146,11 +146,12 @@ export function registerCustomer(data: {
 }
 
 export function loginCustomer(email: string, password: string): Promise<Customer> {
-  return authRequest("/auth/login", { email, password });
+  return authRequest("/auth/login", { email: email.trim(), password });
 }
 
 export async function updateCustomerProfile(data: {
   name: string;
+  email: string;
   phone: string;
   street: string;
   city: string;
@@ -179,12 +180,31 @@ export async function updateCustomerProfile(data: {
 }
 
 export function updateCustomerPassword(data: {
-  current_password: string;
   new_password: string;
+  confirm_password: string;
 }): Promise<{ message: string }> {
   return apiFetch<{ message: string }>("/auth/password", {
     method: "PUT",
     body: JSON.stringify(data),
+  });
+}
+
+export function requestPasswordReset(email: string): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>("/auth/password-reset/request", {
+    method: "POST",
+    body: JSON.stringify({ email: email.trim() }),
+  });
+}
+
+export function confirmPasswordReset(data: {
+  email: string;
+  verification_code: string;
+  new_password: string;
+  confirm_password: string;
+}): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>("/auth/password-reset/confirm", {
+    method: "POST",
+    body: JSON.stringify({ ...data, email: data.email.trim() }),
   });
 }
 

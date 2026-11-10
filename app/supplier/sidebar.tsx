@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import React, { useEffect, useState } from "react";
 import { getStoredSupplierProfile } from "./profile";
 import { mockSupplierProfile } from "@/lib/supplierData";
 
@@ -43,11 +44,16 @@ export default function SupplierSidebar({
     }
     loadProfile();
 
-    function handleUpdate(e: any) {
-      if (e.detail) {
-        setVendorName(e.detail.companyName || "Nanotek Distribution");
-        setVendorAvatar(e.detail.avatarUrl || "");
-        setVendorCode(e.detail.vendorCode || "VEND-NANO-7701");
+    function handleUpdate(e: Event) {
+      const { detail } = e as CustomEvent<{
+        companyName?: string;
+        avatarUrl?: string;
+        vendorCode?: string;
+      }>;
+      if (detail) {
+        setVendorName(detail.companyName || "Nanotek Distribution");
+        setVendorAvatar(detail.avatarUrl || "");
+        setVendorCode(detail.vendorCode || "VEND-NANO-7701");
       }
     }
     window.addEventListener("supplier_profile_updated", handleUpdate);
@@ -207,9 +213,12 @@ export default function SupplierSidebar({
             title="Click to view & edit Distributor Profile"
           >
             {vendorAvatar ? (
-              <img
+              <Image
                 src={vendorAvatar}
                 alt={vendorName}
+                width={40}
+                height={40}
+                unoptimized
                 className="h-10 w-10 shrink-0 rounded-xl object-cover border border-blue-400/40 shadow-sm"
               />
             ) : (
@@ -323,9 +332,12 @@ export default function SupplierSidebar({
                 }`}
               >
                 {vendorAvatar ? (
-                  <img
+                  <Image
                     src={vendorAvatar}
                     alt={vendorName}
+                    width={36}
+                    height={36}
+                    unoptimized
                     className="h-9 w-9 shrink-0 rounded-xl object-cover border border-blue-400/40"
                   />
                 ) : (

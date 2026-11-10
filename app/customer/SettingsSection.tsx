@@ -18,10 +18,11 @@ export default function SettingsSection() {
   });
 
   const [passwordForm, setPasswordForm] = useState({
-    currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [profileSuccessMsg, setProfileSuccessMsg] = useState("");
   const [profileErrorMsg, setProfileErrorMsg] = useState("");
@@ -70,6 +71,7 @@ export default function SettingsSection() {
     try {
       await updateCustomerProfile({
         name: profileForm.name,
+        email: profileForm.email,
         phone: profileForm.phone,
         street: profileForm.street,
         city: profileForm.city,
@@ -89,11 +91,6 @@ export default function SettingsSection() {
     setPasswordErrorMsg("");
     setPasswordSuccessMsg("");
 
-    if (!passwordForm.currentPassword) {
-      setPasswordErrorMsg("Please enter your current password.");
-      return;
-    }
-
     if (passwordForm.newPassword.length < 8) {
       setPasswordErrorMsg("New password must be at least 8 characters long.");
       return;
@@ -107,12 +104,11 @@ export default function SettingsSection() {
     setIsSavingPassword(true);
     try {
       await updateCustomerPassword({
-        current_password: passwordForm.currentPassword,
         new_password: passwordForm.newPassword,
+        confirm_password: passwordForm.confirmPassword,
       });
       setPasswordSuccessMsg("Password changed successfully in database!");
       setPasswordForm({
-        currentPassword: "",
         newPassword: "",
         confirmPassword: "",
       });
@@ -288,38 +284,55 @@ export default function SettingsSection() {
           )}
 
           <form onSubmit={handlePasswordSubmit} className="mt-4 sm:mt-5 space-y-3.5 sm:space-y-4 text-xs">
-            {/* Current Password */}
-            <div>
-              <label className="block font-semibold text-slate-300 mb-1">
-                Current Password
-              </label>
-              <input
-                type="password"
-                required
-                placeholder="••••••••"
-                value={passwordForm.currentPassword}
-                onChange={(e) =>
-                  setPasswordForm({ ...passwordForm, currentPassword: e.target.value })
-                }
-                className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-3.5 py-2.5 text-white placeholder-slate-500 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
-              />
-            </div>
-
             {/* New Password */}
             <div>
               <label className="block font-semibold text-slate-300 mb-1">
                 New Password
               </label>
-              <input
-                type="password"
-                required
-                placeholder="At least 6 characters"
-                value={passwordForm.newPassword}
-                onChange={(e) =>
-                  setPasswordForm({ ...passwordForm, newPassword: e.target.value })
-                }
-                className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-3.5 py-2.5 text-white placeholder-slate-500 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
-              />
+              <div className="relative">
+                <input
+                  type={showNewPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                  maxLength={128}
+                  placeholder="At least 8 characters"
+                  value={passwordForm.newPassword}
+                  onChange={(e) =>
+                    setPasswordForm({ ...passwordForm, newPassword: e.target.value })
+                  }
+                  className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-3.5 py-2.5 pr-10 text-white placeholder-slate-500 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  aria-label={showNewPassword ? "Hide new password" : "Show new password"}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 transition-colors hover:text-white"
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="h-4 w-4"
+                  >
+                    {showNewPassword ? (
+                      <>
+                        <path d="M3 3l18 18" />
+                        <path d="M10.6 10.6a2 2 0 002.8 2.8" />
+                        <path d="M9.9 5.2A10.8 10.8 0 0112 5c5 0 8.5 4.5 9.5 7-.4 1-1.1 2.1-2.1 3.1" />
+                        <path d="M6.2 6.2C3.9 7.6 2.6 9.8 2.5 12c.5 1.2 1.8 3.1 4.1 4.7A9.8 9.8 0 0012 19c1.1 0 2.1-.2 3-.5" />
+                      </>
+                    ) : (
+                      <>
+                        <path d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </>
+                    )}
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {/* Confirm New Password */}
@@ -327,16 +340,50 @@ export default function SettingsSection() {
               <label className="block font-semibold text-slate-300 mb-1">
                 Confirm New Password
               </label>
-              <input
-                type="password"
-                required
-                placeholder="Repeat new password"
-                value={passwordForm.confirmPassword}
-                onChange={(e) =>
-                  setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })
-                }
-                className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-3.5 py-2.5 text-white placeholder-slate-500 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                  maxLength={128}
+                  placeholder="Repeat new password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) =>
+                    setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })
+                  }
+                  className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-3.5 py-2.5 pr-10 text-white placeholder-slate-500 focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? "Hide confirmation password" : "Show confirmation password"}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 transition-colors hover:text-white"
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="h-4 w-4"
+                  >
+                    {showConfirmPassword ? (
+                      <>
+                        <path d="M3 3l18 18" />
+                        <path d="M10.6 10.6a2 2 0 002.8 2.8" />
+                        <path d="M9.9 5.2A10.8 10.8 0 0112 5c5 0 8.5 4.5 9.5 7-.4 1-1.1 2.1-2.1 3.1" />
+                        <path d="M6.2 6.2C3.9 7.6 2.6 9.8 2.5 12c.5 1.2 1.8 3.1 4.1 4.7A9.8 9.8 0 0012 19c1.1 0 2.1-.2 3-.5" />
+                      </>
+                    ) : (
+                      <>
+                        <path d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </>
+                    )}
+                  </svg>
+                </button>
+              </div>
             </div>
 
             {/* Password hint info */}

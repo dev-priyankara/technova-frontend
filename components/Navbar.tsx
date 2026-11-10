@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { clearSession, getSession, type Customer } from "@/lib/auth";
 import { useCart } from "@/context/CartContext";
 
@@ -15,12 +15,8 @@ const navigationLinks = [
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [customer, setCustomer] = useState<Customer | null>(() => getSession());
   const { openCart, totalItems } = useCart();
-
-  useEffect(() => {
-    setCustomer(getSession());
-  }, []);
 
   function handleLogout() {
     clearSession();

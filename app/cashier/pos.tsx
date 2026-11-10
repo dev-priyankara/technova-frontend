@@ -14,6 +14,18 @@ import {
 import { apiFetch } from "@/lib/auth";
 import ReceiptModal from "@/app/cashier/receiptModal";
 
+type BackendProduct = {
+  id: string | number;
+  name: string;
+  category?: string;
+  sku?: string;
+  price?: number;
+  stock_count?: number;
+  specs?: string[] | string;
+  warranty?: string;
+  badge?: string;
+};
+
 export default function POSBillingCounter() {
   // State
   const [products, setProducts] = useState<POSProduct[]>(mockPOSProducts);
@@ -23,21 +35,29 @@ export default function POSBillingCounter() {
 
   useEffect(() => {
     let isMounted = true;
-    apiFetch<any[]>("/products")
+    apiFetch<BackendProduct[]>("/products")
       .then((data) => {
         if (!isMounted || !Array.isArray(data) || data.length === 0) return;
         const mapped: POSProduct[] = data.map((p) => ({
-          id: p.id,
+          id: String(p.id),
           name: p.name,
-          category: p.category,
-          sku: p.sku,
-          price: p.price,
-          stockQty: p.stock_count,
+          category: p.category || "General",
+          sku: p.sku || "N/A",
+          price: Number(p.price ?? 0),
+          stockQty: Number(p.stock_count ?? 0),
           specs: Array.isArray(p.specs) ? p.specs.join(", ") : p.specs || "",
           warranty: p.warranty || "1 Year Warranty",
           badge: p.badge || undefined,
         }));
         setProducts(mapped);
+        const nextCategories = Array.from(
+          new Set<string>([
+            "All Items",
+            ...mapped.map((product) => product.category),
+            ...mockPOSCategories.filter((category) => category !== "All Items"),
+          ]),
+        );
+        setCategories(nextCategories);
       })
       .catch((err) => console.warn("Using default POS products:", err));
 
@@ -284,7 +304,7 @@ export default function POSBillingCounter() {
     };
 
     // Persist POS Order in MySQL backend & decrement inventory
-    apiFetch<any>("/orders", {
+    apiFetch<{ id?: string | number }>("/orders", {
       method: "POST",
       body: JSON.stringify({
         items: cart.map((item) => ({

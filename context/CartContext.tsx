@@ -31,22 +31,30 @@ const STORAGE_KEY = "technova_cart";
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load cart from localStorage on mount
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        setItems(JSON.parse(saved));
+    let cancelled = false;
+    // Defer restoration so the server and first client render match.
+    queueMicrotask(() => {
+      if (cancelled) return;
+
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          setItems(JSON.parse(saved) as CartItem[]);
+        }
+      } catch {
+        // Ignore parse error
       }
-    } catch {
-      // Ignore parse error
-    } finally {
       setIsLoaded(true);
-    }
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Sync cart to localStorage whenever items change
@@ -148,4 +156,3 @@ export function useCart() {
   }
   return context;
 }
-

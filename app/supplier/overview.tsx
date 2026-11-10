@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import {
-  mockSupplierProfile,
   mockSupplierProducts,
   mockRestockRequests,
   mockDeliveryDispatches,
@@ -16,7 +15,6 @@ interface SupplierOverviewProps {
 }
 
 export default function SupplierOverview({ onNavigate }: SupplierOverviewProps) {
-  const [profile] = useState(mockSupplierProfile);
   const [products] = useState(mockSupplierProducts);
   const [requests, setRequests] = useState<RestockRequest[]>(mockRestockRequests);
   const [deliveries] = useState(mockDeliveryDispatches);

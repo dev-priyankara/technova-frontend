@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -29,10 +30,14 @@ export default function CashierPage() {
     }
     loadProfile();
 
-    function handleUpdate(e: any) {
-      if (e.detail) {
-        setCashierName(e.detail.name || "Nimal Perera");
-        setCashierAvatar(e.detail.avatarUrl || "");
+    function handleUpdate(e: Event) {
+      const { detail } = e as CustomEvent<{
+        name?: string;
+        avatarUrl?: string;
+      }>;
+      if (detail) {
+        setCashierName(detail.name || "Nimal Perera");
+        setCashierAvatar(detail.avatarUrl || "");
       }
     }
     window.addEventListener("cashier_profile_updated", handleUpdate);
@@ -103,7 +108,14 @@ export default function CashierPage() {
               title="Cashier Profile"
             >
               {cashierAvatar ? (
-                <img src={cashierAvatar} alt={cashierName} className="h-full w-full object-cover" />
+                <Image
+                  src={cashierAvatar}
+                  alt={cashierName}
+                  width={32}
+                  height={32}
+                  unoptimized
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 getInitials(cashierName)
               )}

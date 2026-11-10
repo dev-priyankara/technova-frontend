@@ -32,6 +32,7 @@ export default function PayHereModal() {
   const grandTotal = subtotal + deliveryFee;
 
   // Populate from session or defaults when checkout modal opens
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (isCheckoutOpen) {
       setStep("form");
@@ -48,6 +49,7 @@ export default function PayHereModal() {
       setOrderId("");
     }
   }, [isCheckoutOpen]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   if (!isCheckoutOpen) return null;
 
@@ -65,29 +67,6 @@ export default function PayHereModal() {
       setCardExpiry(`${clean.slice(0, 2)}/${clean.slice(2)}`);
     } else {
       setCardExpiry(clean);
-    }
-  }
-
-  // Fill sample sandbox test cards
-  function fillTestCard(type: "visa" | "master" | "declined") {
-    if (type === "visa") {
-      setCardNumber("4111 1111 1111 1111");
-      setCardHolder(customerName ? customerName.toUpperCase() : "TEST CARDHOLDER");
-      setCardExpiry("12/28");
-      setCardCvv("123");
-      setCardError("");
-    } else if (type === "master") {
-      setCardNumber("5555 5555 5555 5555");
-      setCardHolder(customerName ? customerName.toUpperCase() : "TEST CARDHOLDER");
-      setCardExpiry("10/27");
-      setCardCvv("789");
-      setCardError("");
-    } else {
-      setCardNumber("4000 0000 0000 0002");
-      setCardHolder("DECLINED TEST");
-      setCardExpiry("05/26");
-      setCardCvv("000");
-      setCardError("");
     }
   }
 
@@ -132,7 +111,7 @@ export default function PayHereModal() {
 
       setProcessingMessage("Finalizing transaction & persisting order in database...");
       try {
-        const orderData = await apiFetch<any>("/orders", {
+        const orderData = await apiFetch<{ id: string | number }>("/orders", {
           method: "POST",
           body: JSON.stringify({
             items: items.map((i) => ({
@@ -155,7 +134,7 @@ export default function PayHereModal() {
 
         const txn = `TXN_PH_${Date.now()}`;
         setTransactionId(txn);
-        setOrderId(orderData.id);
+        setOrderId(String(orderData.id));
         setStep("success");
       } catch (err) {
         setCardError(

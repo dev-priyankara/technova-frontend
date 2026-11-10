@@ -1,7 +1,7 @@
 "use client";
 
+import Image from "next/image";
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import { getStoredCashierProfile } from "./profile";
 
 export type CashierSection =
@@ -43,11 +43,16 @@ export default function CashierSidebar({
     }
     loadProfile();
 
-    function handleUpdate(e: any) {
-      if (e.detail) {
-        setCashierName(e.detail.name || "Nimal Perera");
-        setCashierAvatar(e.detail.avatarUrl || "");
-        setTerminalId(e.detail.terminalId || "POS-01");
+    function handleUpdate(e: Event) {
+      const { detail } = e as CustomEvent<{
+        name?: string;
+        avatarUrl?: string;
+        terminalId?: string;
+      }>;
+      if (detail) {
+        setCashierName(detail.name || "Nimal Perera");
+        setCashierAvatar(detail.avatarUrl || "");
+        setTerminalId(detail.terminalId || "POS-01");
       }
     }
     window.addEventListener("cashier_profile_updated", handleUpdate);
@@ -226,9 +231,12 @@ export default function CashierSidebar({
             title="Click to view & edit Cashier Profile"
           >
             {cashierAvatar ? (
-              <img
+              <Image
                 src={cashierAvatar}
                 alt={cashierName}
+                width={40}
+                height={40}
+                unoptimized
                 className="h-10 w-10 shrink-0 rounded-xl object-cover border border-blue-400/40 shadow-sm"
               />
             ) : (
@@ -337,9 +345,12 @@ export default function CashierSidebar({
                 }`}
               >
                 {cashierAvatar ? (
-                  <img
+                  <Image
                     src={cashierAvatar}
                     alt={cashierName}
+                    width={36}
+                    height={36}
+                    unoptimized
                     className="h-9 w-9 shrink-0 rounded-xl object-cover border border-blue-400/40"
                   />
                 ) : (

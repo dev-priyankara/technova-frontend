@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import Image from "next/image";
+import React, { useState, useRef } from "react";
 import { mockSupplierProfile } from "@/lib/supplierData";
 
 export interface SupplierProfileData {
@@ -78,8 +79,9 @@ interface SupplierProfileProps {
 }
 
 export default function SupplierProfile({ onProfileUpdate }: SupplierProfileProps) {
-  const [profile, setProfile] = useState<SupplierProfileData>(DEFAULT_SUPPLIER_PROFILE);
-  const [avatarPreview, setAvatarPreview] = useState<string>("");
+  const initialProfile = getStoredSupplierProfile();
+  const [profile, setProfile] = useState<SupplierProfileData>(initialProfile);
+  const [avatarPreview, setAvatarPreview] = useState<string>(initialProfile.avatarUrl);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
   const [isSaving, setIsSaving] = useState(false);
@@ -93,12 +95,6 @@ export default function SupplierProfile({ onProfileUpdate }: SupplierProfileProp
   const [showPasswords, setShowPasswords] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const stored = getStoredSupplierProfile();
-    setProfile(stored);
-    setAvatarPreview(stored.avatarUrl);
-  }, []);
 
   function showToast(msg: string, type: "success" | "error" = "success") {
     setToastMessage(msg);
@@ -249,9 +245,12 @@ export default function SupplierProfile({ onProfileUpdate }: SupplierProfileProp
             {/* Avatar Circle */}
             <div className="relative mx-auto h-28 w-28 rounded-3xl overflow-hidden border-2 border-blue-500/50 shadow-2xl shadow-blue-500/20 bg-slate-800 flex items-center justify-center group">
               {avatarPreview ? (
-                <img
+                <Image
                   src={avatarPreview}
                   alt={profile.companyName}
+                  width={112}
+                  height={112}
+                  unoptimized
                   className="h-full w-full object-cover"
                 />
               ) : (

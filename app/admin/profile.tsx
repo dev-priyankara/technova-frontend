@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React, { useState, useEffect, useRef } from "react";
 import { apiFetch } from "@/lib/auth";
 
@@ -283,9 +284,12 @@ export default function AdminProfile({ onProfileUpdate }: AdminProfileProps) {
             {/* Avatar Circle */}
             <div className="relative mx-auto h-28 w-28 rounded-3xl overflow-hidden border-2 border-blue-500/50 shadow-2xl shadow-blue-500/20 bg-slate-800 flex items-center justify-center group">
               {avatarPreview ? (
-                <img
+                <Image
                   src={avatarPreview}
                   alt={profile.name}
+                  width={112}
+                  height={112}
+                  unoptimized
                   className="h-full w-full object-cover"
                 />
               ) : (

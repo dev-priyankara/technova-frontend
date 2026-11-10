@@ -1,4 +1,6 @@
 
+import Link from "next/link";
+
 export default function PromoBanner() {
   return (
     <section
@@ -59,7 +61,7 @@ export default function PromoBanner() {
               </p>
             </div>
 
-            <a
+            <Link
               href="/#products"
               className="mt-8 inline-flex items-center justify-center gap-3 rounded-xl bg-white px-7 py-3.5 font-bold !text-black shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-950"
             >
@@ -67,7 +69,7 @@ export default function PromoBanner() {
               <span aria-hidden="true" className="text-lg !text-black">
                 →
               </span>
-            </a>
+            </Link>
 
             <p className="mt-4 text-xs leading-5 text-blue-200">
               Demo promotional content. Actual discounts and eligibility must

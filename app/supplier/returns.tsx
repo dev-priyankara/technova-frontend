@@ -291,7 +291,7 @@ export default function SupplierReturns() {
                 </label>
                 <select
                   value={reason}
-                  onChange={(e) => setReason(e.target.value as any)}
+                  onChange={(e) => setReason(e.target.value as ReturnedProduct["returnReason"])}
                   className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400"
                 >
                   <option value="Dead On Arrival (DOA)">Dead On Arrival (DOA)</option>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AdminSidebar, { type AdminSection } from "./sidebar";
@@ -135,7 +136,14 @@ export default function AdminPage() {
               title="Admin Profile"
             >
               {headerAvatar ? (
-                <img src={headerAvatar} alt="Profile" className="h-full w-full object-cover" />
+                <Image
+                  src={headerAvatar}
+                  alt="Profile"
+                  width={32}
+                  height={32}
+                  unoptimized
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 getInitials(headerName)
               )}

@@ -9,6 +9,36 @@ interface OrderDetailsSectionProps {
   onBackToOrders: () => void;
 }
 
+type OrderApiResponse = {
+  id: string;
+  date?: string;
+  status?: string;
+  items?: Array<{
+    product_id: string | number;
+    name: string;
+    quantity: number;
+    price: number;
+    sku?: string;
+  }>;
+  shipping_address?: {
+    recipient_name?: string;
+    street?: string;
+    city?: string;
+    district?: string;
+    postal_code?: string;
+    phone?: string;
+  };
+  payment_method?: string;
+  payment_status?: string;
+};
+
+const normalizeOrderStatus = (status: string | undefined): Order["status"] => {
+  if (status === "Processing" || status === "Delivered" || status === "Cancelled") {
+    return status;
+  }
+  return "Pending";
+};
+
 export default function OrderDetailsSection({
   orderId,
   onBackToOrders,
@@ -17,15 +47,15 @@ export default function OrderDetailsSection({
 
   useEffect(() => {
     let isMounted = true;
-    apiFetch<any>(`/orders/${orderId}`)
+    apiFetch<OrderApiResponse>(`/orders/${orderId}`)
       .then((o) => {
         if (!isMounted || !o || !o.id) return;
         setOrder({
-          id: o.id,
+          id: String(o.id),
           date: o.date ? o.date.split("T")[0] : new Date().toISOString().split("T")[0],
-          status: o.status as any,
-          items: (o.items || []).map((it: any) => ({
-            id: it.product_id,
+          status: normalizeOrderStatus(o.status),
+          items: (o.items || []).map((it) => ({
+            id: String(it.product_id),
             name: it.name,
             category: "Hardware Component",
             quantity: it.quantity,

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import Image from "next/image";
+import React, { useState, useRef } from "react";
 
 export interface CashierProfileData {
   name: string;
@@ -60,8 +61,8 @@ interface CashierProfileProps {
 }
 
 export default function CashierProfile({ onProfileUpdate }: CashierProfileProps) {
-  const [profile, setProfile] = useState<CashierProfileData>(DEFAULT_CASHIER_PROFILE);
-  const [avatarPreview, setAvatarPreview] = useState<string>("");
+  const [profile, setProfile] = useState<CashierProfileData>(() => getStoredCashierProfile());
+  const [avatarPreview, setAvatarPreview] = useState<string>(() => getStoredCashierProfile().avatarUrl);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
   const [isSaving, setIsSaving] = useState(false);
@@ -75,12 +76,6 @@ export default function CashierProfile({ onProfileUpdate }: CashierProfileProps)
   const [showPasswords, setShowPasswords] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const stored = getStoredCashierProfile();
-    setProfile(stored);
-    setAvatarPreview(stored.avatarUrl);
-  }, []);
 
   function showToast(msg: string, type: "success" | "error" = "success") {
     setToastMessage(msg);
@@ -221,9 +216,12 @@ export default function CashierProfile({ onProfileUpdate }: CashierProfileProps)
             {/* Avatar Circle */}
             <div className="relative mx-auto h-28 w-28 rounded-3xl overflow-hidden border-2 border-blue-500/50 shadow-2xl shadow-blue-500/20 bg-slate-800 flex items-center justify-center group">
               {avatarPreview ? (
-                <img
+                <Image
                   src={avatarPreview}
                   alt={profile.name}
+                  width={112}
+                  height={112}
+                  unoptimized
                   className="h-full w-full object-cover"
                 />
               ) : (

@@ -15,8 +15,8 @@ export default function SupplierRequests() {
   // State to simulate a store owner sending a new request
   const [showSimulateModal, setShowSimulateModal] = useState(false);
   const [simBranch, setSimBranch] = useState(mockShopBranches[0].name);
-  const [simManager, setSimManager] = useState("Kasun Silva");
-  const [simPhone, setSimPhone] = useState("+94 77 123 4567");
+  const [simManager] = useState("Kasun Silva");
+  const [simPhone] = useState("+94 77 123 4567");
   const [simUrgency, setSimUrgency] = useState<"Critical (Out of Stock)" | "High (Low Stock)" | "Normal Restock">("Critical (Out of Stock)");
   const [simProduct, setSimProduct] = useState(mockSupplierProducts[1]);
   const [simQty, setSimQty] = useState(6);
@@ -356,7 +356,14 @@ export default function SupplierRequests() {
                   </label>
                   <select
                     value={simUrgency}
-                    onChange={(e) => setSimUrgency(e.target.value as any)}
+                    onChange={(e) =>
+                      setSimUrgency(
+                        e.target.value as
+                          | "Critical (Out of Stock)"
+                          | "High (Low Stock)"
+                          | "Normal Restock",
+                      )
+                    }
                     className="w-full rounded-xl border border-white/10 bg-slate-950 px-3.5 py-2.5 text-white outline-none focus:border-blue-400"
                   >
                     <option value="Critical (Out of Stock)">Critical (Out of Stock)</option>

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/auth";
 import type { AdminProfileData } from "./profile";
@@ -293,9 +294,12 @@ export default function AdminSidebar({
             title="Click to view & edit Profile"
           >
             {profileAvatar ? (
-              <img
+              <Image
                 src={profileAvatar}
                 alt={profileName}
+                width={40}
+                height={40}
+                unoptimized
                 className="h-10 w-10 shrink-0 rounded-xl object-cover border border-blue-400/40 shadow-sm"
               />
             ) : (
@@ -390,9 +394,12 @@ export default function AdminSidebar({
                 }`}
               >
                 {profileAvatar ? (
-                  <img
+                  <Image
                     src={profileAvatar}
                     alt={profileName}
+                    width={36}
+                    height={36}
+                    unoptimized
                     className="h-9 w-9 shrink-0 rounded-xl object-cover border border-blue-400/40"
                   />
                 ) : (

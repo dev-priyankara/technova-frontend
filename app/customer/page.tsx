@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
@@ -20,23 +20,20 @@ export default function CustomerDashboardPage() {
   const [selectedOrderId, setSelectedOrderId] = useState<string>(
     dummyOrders[0]?.id || "ORD-94821",
   );
-  const [customer, setCustomer] = useState<Customer | null>(null);
-
-  useEffect(() => {
+  const [customer] = useState<Customer | null>(() => {
     const session = getSession();
     if (session) {
-      setCustomer(session);
-    } else {
-      setCustomer({
-        id: "demo-cust-01",
-        name: "Kasun Perera",
-        email: "kasun.perera@example.lk",
-        phone: "+94 77 123 4567",
-        password: "",
-        createdAt: "2025-04-12",
-      });
+      return session;
     }
-  }, []);
+    return {
+      id: "demo-cust-01",
+      name: "Kasun Perera",
+      email: "kasun.perera@example.lk",
+      phone: "+94 77 123 4567",
+      password: "",
+      createdAt: "2025-04-12",
+    };
+  });
 
   function handleLogout() {
     clearSession();
