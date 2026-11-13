@@ -14,8 +14,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Browser extensions (Zotero Connector, Grammarly, password managers and
+  // others) inject attributes such as data-zotero-connector-injected onto
+  // <html> before React hydrates. Those mutations are outside the app's
+  // control, so keep React from treating them as a hydration mismatch.
+  // suppressHydrationWarning only applies to this element's own attributes.
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
         <AnimatedTechBackground />
 
