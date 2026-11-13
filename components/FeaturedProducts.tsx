@@ -404,7 +404,7 @@ export default function FeaturedProducts({
         const mapped: Product[] = data.map((p) => ({
           id: p.id,
           name: p.name,
-          category: p.category,
+          category: p.category || "Other",
           brand: p.brand || "",
           price: p.price,
           originalPrice: p.original_price || undefined,
