@@ -326,7 +326,7 @@ export default function POSBillingCounter() {
     })
       .then((savedOrder) => {
         if (savedOrder?.id) {
-          transaction.receiptNo = savedOrder.id;
+          transaction.receiptNo = String(savedOrder.id);
         }
       })
       .catch((err) => {

@@ -10,7 +10,7 @@ import {
   setPendingRegistration,
   setSession,
 } from "@/lib/auth";
-import { sendVerificationEmail } from "@/lib/emailjs";
+import { isEmailJsConfigured, sendVerificationEmail } from "@/lib/emailjs";
 
 const inputClass =
   "mt-1.5 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-center text-2xl tracking-[0.5em] text-white outline-none placeholder:text-slate-400 focus:border-blue-400/60 focus:bg-white/10";
@@ -25,10 +25,18 @@ export default function VerifyEmailPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+  const [devCode, setDevCode] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!getPendingRegistration()) {
+    const pending = getPendingRegistration();
+    if (!pending) {
       router.replace("/register");
+      return;
+    }
+    // Only reveal the code locally. Production relies on the real email, and
+    // EmailJS being configured should hide the hint too.
+    if (process.env.NODE_ENV !== "production" && !isEmailJsConfigured()) {
+      setDevCode(pending.verification_code);
     }
   }, [router]);
 
@@ -125,6 +133,25 @@ export default function VerifyEmailPage() {
                 Enter the 6-digit code sent to your email address.
               </p>
             </div>
+
+            {devCode && (
+              <div
+                role="status"
+                className="mt-4 rounded-lg border border-blue-500/30 bg-blue-500/10 p-3 text-center text-xs text-blue-200"
+              >
+                <span className="font-semibold text-blue-300">
+                  Local testing only — no email was sent. Code:
+                </span>{" "}
+                <span className="font-mono text-sm tracking-wider font-bold text-white bg-blue-900/60 px-2 py-0.5 rounded">{devCode}</span>
+                <button
+                  type="button"
+                  onClick={() => setCode(devCode)}
+                  className="ml-2 text-xs text-blue-400 hover:text-blue-300 underline font-semibold"
+                >
+                  Auto-fill
+                </button>
+              </div>
+            )}
 
             {error && (
               <div className="mt-6 rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm font-medium text-red-300">
