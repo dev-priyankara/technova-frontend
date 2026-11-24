@@ -6,10 +6,17 @@ import {
   mockShopBranches,
   type DeliveryDispatch,
 } from "@/lib/supplierData";
+import { apiFetch, API_URL } from "@/lib/auth";
+
+type ReportPeriod = "weekly" | "monthly";
+type SupplierContext = { supplier_id: number };
 
 export default function SupplierDeliveries() {
   const [deliveries, setDeliveries] = useState<DeliveryDispatch[]>(mockDeliveryDispatches);
   const [showModal, setShowModal] = useState(false);
+  const [reportPeriod, setReportPeriod] = useState<ReportPeriod>("weekly");
+  const [reportBusy, setReportBusy] = useState(false);
+  const [reportError, setReportError] = useState("");
 
   // New Dispatch Form State
   const [targetShop, setTargetShop] = useState(mockShopBranches[0].name);
@@ -50,6 +57,44 @@ export default function SupplierDeliveries() {
     setShowModal(false);
   }
 
+  async function downloadReport() {
+    setReportBusy(true);
+    setReportError("");
+    try {
+      const context = await apiFetch<SupplierContext>("/auth/supplier-context");
+      const response = await fetch(
+        `${API_URL}/suppliers/${context.supplier_id}/deliveries/report.pdf?period=${reportPeriod}`,
+        {
+          credentials: "include",
+          headers: { "X-Requested-With": "TECHNOVA" },
+        },
+      );
+      if (!response.ok) {
+        const detail = await response.json().catch(() => null);
+        throw new Error(
+          detail && typeof detail === "object" && "detail" in detail
+            ? String(detail.detail)
+            : `Report download failed (${response.status})`,
+        );
+      }
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = `delivered-details-${reportPeriod}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      setReportError(
+        error instanceof Error ? error.message : "Could not download the report",
+      );
+    } finally {
+      setReportBusy(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header Banner */}
@@ -75,6 +120,47 @@ export default function SupplierDeliveries() {
           </svg>
           <span>Create New Shop Dispatch</span>
         </button>
+      </div>
+
+      {/* Delivered details report */}
+      <div className="rounded-3xl border border-white/10 bg-slate-900/40 p-5 backdrop-blur-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-sm font-extrabold text-white">
+              Delivered Details Report
+            </h2>
+            <p className="mt-1 text-xs text-slate-400">
+              Download a PDF of your delivered consignments for the selected period.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <label className="sr-only" htmlFor="report-period">
+              Report period
+            </label>
+            <select
+              id="report-period"
+              value={reportPeriod}
+              onChange={(event) => setReportPeriod(event.target.value as ReportPeriod)}
+              className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2.5 text-xs font-bold text-white outline-none focus:border-blue-400"
+            >
+              <option value="weekly">Weekly (last 7 days)</option>
+              <option value="monthly">Monthly (this month)</option>
+            </select>
+            <button
+              type="button"
+              onClick={downloadReport}
+              disabled={reportBusy}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-lg shadow-emerald-600/20 hover:brightness-110 active:scale-95 disabled:opacity-50"
+            >
+              {reportBusy ? "Preparing PDF…" : "Download PDF"}
+            </button>
+          </div>
+        </div>
+        {reportError && (
+          <p className="mt-3 text-xs font-semibold text-red-300" role="alert">
+            {reportError}
+          </p>
+        )}
       </div>
 
       {/* Dispatches Cards Grid */}

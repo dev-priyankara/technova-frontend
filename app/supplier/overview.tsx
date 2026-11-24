@@ -1,38 +1,84 @@
 "use client";
 
-import React, { useState } from "react";
-import {
-  mockSupplierProducts,
-  mockRestockRequests,
-  mockDeliveryDispatches,
-  mockReturnedProducts,
-  type RestockRequest,
-} from "@/lib/supplierData";
+import React, { useEffect, useState } from "react";
+import { apiFetch } from "@/lib/auth";
 import { type SupplierSection } from "./sidebar";
 
 interface SupplierOverviewProps {
   onNavigate: (section: SupplierSection) => void;
 }
 
+interface SupplierAlert {
+  id: number;
+  type: string;
+  title: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+interface SupplierSummary {
+  company_name: string;
+  contact_person: string;
+  email: string;
+  phone: string | null;
+  address: string | null;
+  vendor_code: string | null;
+  rating: number | null;
+  contract_status: string;
+  city: string | null;
+  unread_notifications: number;
+  products_catalogued: number;
+  deliveries_to_date: number;
+  units_supplied_to_date: number;
+  value_supplied_to_date: number;
+  returns_to_date: number;
+  pending_requests: number;
+}
+
 export default function SupplierOverview({ onNavigate }: SupplierOverviewProps) {
-  const [products] = useState(mockSupplierProducts);
-  const [requests, setRequests] = useState<RestockRequest[]>(mockRestockRequests);
-  const [deliveries] = useState(mockDeliveryDispatches);
-  const [returns] = useState(mockReturnedProducts);
+  const [supplierId, setSupplierId] = useState<number | null>(null);
+  const [summary, setSummary] = useState<SupplierSummary | null>(null);
+  const [summaryError, setSummaryError] = useState("");
+  const [alerts, setAlerts] = useState<SupplierAlert[]>([]);
+  const [alertError, setAlertError] = useState("");
 
-  const pendingRequests = requests.filter((r) => r.status === "Pending Supplier Approval");
-  const inTransitDeliveries = deliveries.filter(
-    (d) => d.status === "In-Transit" || d.status === "Preparing Dispatch"
-  );
-  const pendingRMAs = returns.filter((r) => r.status === "Pending Inspection");
+  useEffect(() => {
+    queueMicrotask(async () => {
+      try {
+        const context = await apiFetch<{ supplier_id: number }>("/auth/supplier-context");
+        setSupplierId(context.supplier_id);
+        const summaryData = await apiFetch<SupplierSummary>(
+          `/suppliers/${context.supplier_id}/me/dashboard-summary`,
+        );
+        setSummary(summaryData);
+        const notifications = await apiFetch<SupplierAlert[]>(
+          `/suppliers/${context.supplier_id}/notifications`,
+        );
+        setAlerts(
+          notifications
+            .filter((note) => note.type === "low_stock" && !note.is_read)
+            .slice(0, 3),
+        );
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Could not load dashboard data.";
+        setSummaryError(message);
+        setAlertError(message);
+      }
+    });
+  }, []);
 
-  function acceptRequest(id: string) {
-    setRequests(
-      requests.map((r) =>
-        r.id === id ? { ...r, status: "Accepted & Preparing" } : r
-      )
-    );
-    alert("Shop restock request accepted! Added to dispatch queue.");
+  async function markAlertRead(notificationId: number) {
+    if (supplierId === null) return;
+    try {
+      await apiFetch(
+        `/suppliers/${supplierId}/notifications/${notificationId}/read`,
+        { method: "PATCH" },
+      );
+      setAlerts((previous) => previous.filter((note) => note.id !== notificationId));
+    } catch (err) {
+      setAlertError(err instanceof Error ? err.message : "Could not update the alert.");
+    }
   }
 
   return (
@@ -55,26 +101,75 @@ export default function SupplierOverview({ onNavigate }: SupplierOverviewProps) 
 
           <div className="shrink-0 flex flex-col sm:flex-row gap-3">
             <button
-              onClick={() => onNavigate("products")}
+              onClick={() => onNavigate("submissions")}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-3.5 text-xs font-extrabold text-white shadow-xl shadow-blue-600/30 hover:brightness-110 active:scale-95 transition-all"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              <span>Dispatch Stock to Shops</span>
+              <span>Submit a Product</span>
             </button>
 
             <button
               onClick={() => onNavigate("requests")}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-slate-800/80 px-5 py-3.5 text-xs font-bold text-slate-200 hover:bg-white/10 transition"
             >
-              <span>Restock Orders ({pendingRequests.length})</span>
+              <span>Restock Orders ({summary?.pending_requests ?? 0})</span>
             </button>
           </div>
         </div>
 
         {/* Ambient glow */}
         <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-blue-600/15 blur-3xl pointer-events-none" />
+      </div>
+
+      {summaryError && (
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs font-semibold text-amber-200">
+          {summaryError}
+        </div>
+      )}
+
+      {/* Lifetime supplier figures */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          {
+            label: "Deliveries To Date",
+            value: (summary?.deliveries_to_date ?? 0).toLocaleString("en-LK"),
+            suffix: "consignments",
+            accent: "text-emerald-300",
+          },
+          {
+            label: "Units Supplied To Date",
+            value: (summary?.units_supplied_to_date ?? 0).toLocaleString("en-LK"),
+            suffix: "units",
+            accent: "text-blue-300",
+          },
+          {
+            label: "Value Supplied To Date",
+            value: `Rs. ${(summary?.value_supplied_to_date ?? 0).toLocaleString("en-LK", { maximumFractionDigits: 0 })}`,
+            suffix: "all time",
+            accent: "text-amber-300",
+          },
+          {
+            label: "Returns To Date",
+            value: (summary?.returns_to_date ?? 0).toLocaleString("en-LK"),
+            suffix: `${summary?.unread_notifications ?? 0} unread notifications`,
+            accent: "text-purple-300",
+          },
+        ].map((metric) => (
+          <div
+            key={metric.label}
+            className="rounded-3xl border border-white/10 bg-slate-900/40 p-4 backdrop-blur-xl"
+          >
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              {metric.label}
+            </p>
+            <p className={`mt-2 font-mono text-xl font-black ${metric.accent}`}>
+              {metric.value}
+            </p>
+            <p className="mt-1 text-[11px] text-slate-500">{metric.suffix}</p>
+          </div>
+        ))}
       </div>
 
       {/* Critical Shop Low-Stock Warning Banner */}
@@ -87,11 +182,39 @@ export default function SupplierOverview({ onNavigate }: SupplierOverviewProps) 
           </div>
           <div>
             <h3 className="text-sm font-extrabold text-red-200">
-              Low-Stock Replenishment Alert from Store Owners
+              Low-Stock Alerts from TECHNOVA Admin
             </h3>
-            <p className="text-xs text-red-300/80 mt-0.5">
-              TECHNOVA Flagship (Colombo) ran out of Samsung 990 PRO SSDs and Kandy branch has only 1 Ryzen 7800X3D unit left.
-            </p>
+            {alerts.length > 0 ? (
+              <div className="mt-1 space-y-2">
+                {alerts.map((alert) => (
+                  <div
+                    key={alert.id}
+                    className="rounded-xl border border-red-400/20 bg-red-500/10 p-2.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-xs font-bold text-red-200">{alert.title}</span>
+                      <button
+                        type="button"
+                        onClick={() => markAlertRead(alert.id)}
+                        className="shrink-0 text-[10px] font-bold text-red-300 hover:text-white"
+                      >
+                        Mark read
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-red-300/80 mt-0.5">
+                      {alert.message}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-red-300/80 mt-0.5">
+                No low-stock alerts from TECHNOVA administrators right now.
+              </p>
+            )}
+            {alertError && (
+              <p className="mt-1 text-[11px] font-semibold text-rose-300">{alertError}</p>
+            )}
           </div>
         </div>
 
@@ -106,230 +229,53 @@ export default function SupplierOverview({ onNavigate }: SupplierOverviewProps) 
         </button>
       </div>
 
-      {/* Operational KPI Grid */}
+      {/* Current status from real supplier data */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div
-          onClick={() => onNavigate("products")}
-          className="rounded-3xl border border-white/10 bg-slate-900/40 p-5 backdrop-blur-xl cursor-pointer hover:border-blue-500/40 transition"
-        >
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-bold uppercase tracking-wider">Catalog SKUs</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 font-bold">
-              📦
-            </div>
-          </div>
-          <div className="mt-3 font-mono text-2xl font-black text-white">
-            {products.length} Hardware SKUs
-          </div>
-          <div className="mt-1 text-xs text-slate-300">
-            <span>Wholesale inventory active</span>
-          </div>
-        </div>
-
-        <div
-          onClick={() => onNavigate("requests")}
-          className="rounded-3xl border border-white/10 bg-slate-900/40 p-5 backdrop-blur-xl cursor-pointer hover:border-amber-500/40 transition"
-        >
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-bold uppercase tracking-wider">Pending Orders</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 font-bold">
-              📥
-            </div>
-          </div>
-          <div className="mt-3 font-mono text-2xl font-black text-white">
-            {pendingRequests.length} Restock POs
-          </div>
-          <div className="mt-1 text-xs text-amber-300 font-mono">
-            <span>Value: Rs. {pendingRequests.reduce((s, r) => s + r.totalEstValue, 0).toLocaleString("en-LK")}</span>
-          </div>
-        </div>
-
-        <div
-          onClick={() => onNavigate("deliveries")}
-          className="rounded-3xl border border-white/10 bg-slate-900/40 p-5 backdrop-blur-xl cursor-pointer hover:border-blue-500/40 transition"
-        >
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-bold uppercase tracking-wider">Dispatches Active</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 font-bold">
-              🚚
-            </div>
-          </div>
-          <div className="mt-3 font-mono text-2xl font-black text-white">
-            {inTransitDeliveries.length} Shipments
-          </div>
-          <div className="mt-1 text-xs text-blue-300">
-            <span>En route to Galle & Kandy</span>
-          </div>
-        </div>
-
-        <div
-          onClick={() => onNavigate("returns")}
-          className="rounded-3xl border border-white/10 bg-slate-900/40 p-5 backdrop-blur-xl cursor-pointer hover:border-purple-500/40 transition"
-        >
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-bold uppercase tracking-wider">Returns & RMAs</span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 font-bold">
-              🔄
-            </div>
-          </div>
-          <div className="mt-3 font-mono text-2xl font-black text-white">
-            {returns.length} Returned Items
-          </div>
-          <div className="mt-1 text-xs text-purple-300">
-            <span>{pendingRMAs.length} awaiting QA testing</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Grid: Pending Store Restock Requests & Active Dispatches */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-7 rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl space-y-4">
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
-            <div>
-              <h2 className="text-base font-extrabold text-white">
-                Store Owner Restock Inquiries
-              </h2>
-              <p className="text-xs text-slate-300">
-                Replenishment purchase orders sent when shop stocks drop low.
-              </p>
-            </div>
-            <button
-              onClick={() => onNavigate("requests")}
-              className="text-xs font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1"
-            >
-              <span>View All ({requests.length})</span>
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            {requests.slice(0, 3).map((req) => (
-              <div
-                key={req.id}
-                className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3 hover:border-white/20 transition"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div>
-                    <span className="font-mono text-xs font-bold text-blue-300 block">
-                      {req.requestNo}
-                    </span>
-                    <span className="text-xs font-bold text-white">
-                      {req.shopBranch}
-                    </span>
-                  </div>
-                  <span
-                    className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase border self-start sm:self-auto ${
-                      req.urgency.startsWith("Critical")
-                        ? "bg-red-500/20 text-red-300 border-red-500/30"
-                        : req.urgency.startsWith("High")
-                        ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
-                        : "bg-blue-500/20 text-blue-300 border-blue-500/30"
-                    }`}
-                  >
-                    {req.urgency}
-                  </span>
-                </div>
-
-                <div className="text-[11px] text-slate-300 space-y-1 bg-black/20 p-2.5 rounded-xl">
-                  {req.items.map((it, idx) => (
-                    <div key={idx} className="flex justify-between items-center">
-                      <span className="truncate pr-2">
-                        {it.requestedQty}x {it.productName}
-                      </span>
-                      <span className="font-mono text-slate-300 shrink-0">
-                        Shop stock: {it.currentShopStock} units
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between pt-1 border-t border-white/5 text-xs">
-                  <div>
-                    <span className="text-[10px] text-slate-300 block">Order Valuation</span>
-                    <span className="font-mono font-bold text-emerald-400">
-                      Rs. {req.totalEstValue.toLocaleString("en-LK")}
-                    </span>
-                  </div>
-
-                  {req.status === "Pending Supplier Approval" ? (
-                    <button
-                      onClick={() => acceptRequest(req.id)}
-                      className="rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-emerald-500 transition shadow"
-                    >
-                      Accept & Dispatch
-                    </button>
-                  ) : (
-                    <span className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-semibold text-slate-300">
-                      {req.status}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="lg:col-span-5 rounded-3xl border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl space-y-4">
-          <div className="flex items-center justify-between border-b border-white/10 pb-3">
-            <div>
-              <h2 className="text-base font-extrabold text-white">
-                Branch Deliveries
-              </h2>
-              <p className="text-xs text-slate-300">
-                Live transit tracking to store counters.
-              </p>
-            </div>
-            <button
-              onClick={() => onNavigate("deliveries")}
-              className="text-xs font-bold text-blue-400 hover:text-blue-300"
-            >
-              All Deliveries
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            {deliveries.map((dsp) => (
-              <div
-                key={dsp.id}
-                className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-2.5"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-bold text-blue-300">
-                    {dsp.dispatchNo}
-                  </span>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
-                      dsp.status === "In-Transit"
-                        ? "bg-blue-500/20 text-blue-300 border-blue-500/30 animate-pulse"
-                        : dsp.status === "Delivered & Verified"
-                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-                        : "bg-amber-500/20 text-amber-300 border-amber-500/30"
-                    }`}
-                  >
-                    {dsp.status}
-                  </span>
-                </div>
-
-                <div className="text-xs">
-                  <div className="font-bold text-white">{dsp.destinationShop}</div>
-                  <div className="text-[11px] text-slate-300 mt-0.5">
-                    Carrier: {dsp.carrier}
-                  </div>
-                  <div className="font-mono text-[10px] text-slate-400">
-                    Waybill: {dsp.trackingNumber}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-1 border-t border-white/5 text-[11px] text-slate-300">
-                  <span>Units: {dsp.totalUnits} items</span>
-                  <span className="text-slate-300">ETA: {dsp.estimatedArrival}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {[
+          {
+            label: "Catalogued Products",
+            value: (summary?.products_catalogued ?? 0).toLocaleString("en-LK"),
+            suffix: "approved listings",
+            accent: "text-blue-300",
+            section: "submissions" as SupplierSection,
+          },
+          {
+            label: "Pending Restock Requests",
+            value: (summary?.pending_requests ?? 0).toLocaleString("en-LK"),
+            suffix: "awaiting response",
+            accent: "text-amber-300",
+            section: "requests" as SupplierSection,
+          },
+          {
+            label: "Unread Notifications",
+            value: (summary?.unread_notifications ?? 0).toLocaleString("en-LK"),
+            suffix: "from TECHNOVA",
+            accent: "text-rose-300",
+            section: "overview" as SupplierSection,
+          },
+          {
+            label: "Contract Status",
+            value: summary?.contract_status ?? "—",
+            suffix: summary?.vendor_code ?? "Supplier account",
+            accent: "text-emerald-300",
+            section: "profile" as SupplierSection,
+          },
+        ].map((metric) => (
+          <button
+            key={metric.label}
+            type="button"
+            onClick={() => onNavigate(metric.section)}
+            className="rounded-3xl border border-white/10 bg-slate-900/40 p-5 text-left backdrop-blur-xl transition hover:border-blue-500/40"
+          >
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              {metric.label}
+            </p>
+            <p className={`mt-3 font-mono text-2xl font-black ${metric.accent}`}>
+              {metric.value}
+            </p>
+            <p className="mt-1 text-[11px] text-slate-500">{metric.suffix}</p>
+          </button>
+        ))}
       </div>
     </div>
   );

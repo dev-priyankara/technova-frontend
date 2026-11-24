@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import React, { useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { mockSupplierProfile } from "@/lib/supplierData";
+import { apiFetch, updateCustomerPassword, updateCustomerProfile } from "@/lib/auth";
 
 export interface SupplierProfileData {
   companyName: string;
@@ -96,6 +97,38 @@ export default function SupplierProfile({ onProfileUpdate }: SupplierProfileProp
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    let active = true;
+    apiFetch<{
+      name: string;
+      email: string;
+      phone: string | null;
+      street: string;
+      city: string;
+      postal_code: string;
+    }>("/auth/profile")
+      .then((currentUser) => {
+        if (!active) return;
+        setProfile((previous) => ({
+          ...previous,
+          contactPerson: currentUser.name,
+          email: currentUser.email,
+          phone: currentUser.phone || "",
+          street: currentUser.street || "",
+          city: currentUser.city || "",
+          postalCode: currentUser.postal_code || "",
+        }));
+      })
+      .catch(() => {
+        if (active) {
+          showToast("Could not load your supplier profile.", "error");
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   function showToast(msg: string, type: "success" | "error" = "success") {
     setToastMessage(msg);
     setToastType(type);
@@ -144,7 +177,7 @@ export default function SupplierProfile({ onProfileUpdate }: SupplierProfileProp
   }
 
   // Handle Profile Details Save
-  function handleSaveProfile(e: React.FormEvent) {
+  async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
     if (!profile.companyName.trim()) {
       showToast("Please enter a valid company name.", "error");
@@ -162,40 +195,52 @@ export default function SupplierProfile({ onProfileUpdate }: SupplierProfileProp
     }
 
     setIsSaving(true);
-    const updated: SupplierProfileData = {
-      ...profile,
-      companyName: profile.companyName.trim(),
-      contactPerson: profile.contactPerson.trim(),
-      email: profile.email.trim(),
-      phone: profile.phone.trim(),
-      street: profile.street.trim(),
-      city: profile.city.trim(),
-      postalCode: profile.postalCode.trim(),
-      bankName: profile.bankName.trim(),
-      bankBranch: profile.bankBranch.trim(),
-      bankAccountNo: profile.bankAccountNo.trim(),
-      avatarUrl: avatarPreview,
-    };
-
-    saveStoredSupplierProfile(updated);
-    setProfile(updated);
-    onProfileUpdate?.(updated);
-
-    setTimeout(() => {
+    try {
+      await updateCustomerProfile({
+        name: profile.contactPerson.trim(),
+        email: profile.email.trim(),
+        phone: profile.phone.trim(),
+        street: profile.street.trim(),
+        city: profile.city.trim(),
+        postal_code: profile.postalCode.trim(),
+      });
+      const updated: SupplierProfileData = {
+        ...profile,
+        companyName: profile.companyName.trim(),
+        contactPerson: profile.contactPerson.trim(),
+        email: profile.email.trim(),
+        phone: profile.phone.trim(),
+        street: profile.street.trim(),
+        city: profile.city.trim(),
+        postalCode: profile.postalCode.trim(),
+        bankName: profile.bankName.trim(),
+        bankBranch: profile.bankBranch.trim(),
+        bankAccountNo: profile.bankAccountNo.trim(),
+        avatarUrl: avatarPreview,
+      };
+      saveStoredSupplierProfile(updated);
+      setProfile(updated);
+      onProfileUpdate?.(updated);
+      showToast("Supplier corporate profile details saved successfully!");
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Could not save your profile.",
+        "error",
+      );
+    } finally {
       setIsSaving(false);
-      showToast("Supplier corporate profile details and logo saved successfully!");
-    }, 400);
+    }
   }
 
   // Handle Security Password Update
-  function handleSavePassword(e: React.FormEvent) {
+  async function handleSavePassword(e: React.FormEvent) {
     e.preventDefault();
     if (!currentPassword) {
       showPassToast("Please enter your current account password.", "error");
       return;
     }
-    if (newPassword.length < 6) {
-      showPassToast("New password must be at least 6 characters long.", "error");
+    if (newPassword.length < 8) {
+      showPassToast("New password must be at least 8 characters long.", "error");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -203,10 +248,21 @@ export default function SupplierProfile({ onProfileUpdate }: SupplierProfileProp
       return;
     }
 
-    showPassToast("Distributor account security credentials updated successfully!");
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
+    try {
+      await updateCustomerPassword({
+        new_password: newPassword,
+        confirm_password: confirmPassword,
+      });
+      showPassToast("Distributor account security credentials updated successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      showPassToast(
+        error instanceof Error ? error.message : "Could not update your password.",
+        "error",
+      );
+    }
   }
 
   function getInitials(nameStr: string): string {

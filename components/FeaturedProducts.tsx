@@ -395,6 +395,8 @@ export default function FeaturedProducts({
       specs?: string[];
       description?: string;
       warranty?: string;
+      image_url?: string | null;
+      created_at?: string;
     };
 
     let isMounted = true;
@@ -416,7 +418,25 @@ export default function FeaturedProducts({
           specs: Array.isArray(p.specs) ? p.specs : [],
           description: p.description || "",
           warranty: p.warranty || "Official Warranty",
+          image: p.image_url
+            ? p.image_url.startsWith("http")
+              ? p.image_url
+              : `${process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, "") || "http://localhost:8000"}${
+                  p.image_url.startsWith("/") ? p.image_url : `/${p.image_url}`
+                }`
+            : undefined,
         }));
+        // Newest catalogue additions (e.g. approved supplier submissions)
+        // should be visible in the featured section, not buried after dozens
+        // of seed products.
+        const createdTimes = new Map(
+          data.map((p) => [String(p.id), new Date(p.created_at || 0).getTime() || 0]),
+        );
+        mapped.sort(
+          (a, b) =>
+            (createdTimes.get(String(b.id)) || 0) - (createdTimes.get(String(a.id)) || 0) ||
+            Number(b.id) - Number(a.id),
+        );
         setProducts(mapped);
       })
       .catch((err) => console.warn("Using default demo products:", err));

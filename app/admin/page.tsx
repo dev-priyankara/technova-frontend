@@ -8,6 +8,7 @@ import AdminSidebar, { type AdminSection } from "./sidebar";
 import AdminOverview from "./overview";
 import AdminUsers from "./users";
 import AdminProducts from "./products";
+import AdminSubmissions from "./submissions";
 import AdminCategories from "./categories";
 import AdminInventory from "./inventory";
 import AdminSales from "./sales";
@@ -159,6 +160,7 @@ export default function AdminPage() {
 
           {activeSection === "users" && <AdminUsers />}
           {activeSection === "products" && <AdminProducts />}
+          {activeSection === "submissions" && <AdminSubmissions />}
           {activeSection === "categories" && <AdminCategories />}
           {activeSection === "inventory" && <AdminInventory />}
           {activeSection === "sales" && <AdminSales />}

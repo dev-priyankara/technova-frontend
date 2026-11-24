@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import React, { useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import { apiFetch, updateCustomerPassword, updateCustomerProfile } from "@/lib/auth";
 
 export interface CashierProfileData {
   name: string;
@@ -77,6 +78,38 @@ export default function CashierProfile({ onProfileUpdate }: CashierProfileProps)
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    let active = true;
+    apiFetch<{
+      name: string;
+      email: string;
+      phone: string | null;
+      street: string;
+      city: string;
+      postal_code: string;
+    }>("/auth/profile")
+      .then((currentUser) => {
+        if (!active) return;
+        setProfile((previous) => ({
+          ...previous,
+          name: currentUser.name,
+          email: currentUser.email,
+          phone: currentUser.phone || "",
+          street: currentUser.street || "",
+          city: currentUser.city || "",
+          postalCode: currentUser.postal_code || "",
+        }));
+      })
+      .catch(() => {
+        if (active) {
+          showToast("Could not load your cashier profile.", "error");
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   function showToast(msg: string, type: "success" | "error" = "success") {
     setToastMessage(msg);
     setToastType(type);
@@ -125,7 +158,7 @@ export default function CashierProfile({ onProfileUpdate }: CashierProfileProps)
   }
 
   // Handle Profile Details Save
-  function handleSaveProfile(e: React.FormEvent) {
+  async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
     if (!profile.name.trim()) {
       showToast("Please enter a valid full name.", "error");
@@ -138,36 +171,48 @@ export default function CashierProfile({ onProfileUpdate }: CashierProfileProps)
     }
 
     setIsSaving(true);
-    const updated: CashierProfileData = {
-      ...profile,
-      name: profile.name.trim(),
-      email: profile.email.trim(),
-      phone: profile.phone.trim(),
-      street: profile.street.trim(),
-      city: profile.city.trim(),
-      postalCode: profile.postalCode.trim(),
-      avatarUrl: avatarPreview,
-    };
-
-    saveStoredCashierProfile(updated);
-    setProfile(updated);
-    onProfileUpdate?.(updated);
-
-    setTimeout(() => {
+    try {
+      await updateCustomerProfile({
+        name: profile.name.trim(),
+        email: profile.email.trim(),
+        phone: profile.phone.trim(),
+        street: profile.street.trim(),
+        city: profile.city.trim(),
+        postal_code: profile.postalCode.trim(),
+      });
+      const updated: CashierProfileData = {
+        ...profile,
+        name: profile.name.trim(),
+        email: profile.email.trim(),
+        phone: profile.phone.trim(),
+        street: profile.street.trim(),
+        city: profile.city.trim(),
+        postalCode: profile.postalCode.trim(),
+        avatarUrl: avatarPreview,
+      };
+      saveStoredCashierProfile(updated);
+      setProfile(updated);
+      onProfileUpdate?.(updated);
+      showToast("Cashier profile details saved successfully!");
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Could not save your profile.",
+        "error",
+      );
+    } finally {
       setIsSaving(false);
-      showToast("Cashier profile details and avatar saved successfully!");
-    }, 400);
+    }
   }
 
   // Handle Password / PIN Update
-  function handleSavePassword(e: React.FormEvent) {
+  async function handleSavePassword(e: React.FormEvent) {
     e.preventDefault();
     if (!currentPassword) {
       showPassToast("Please enter your current cashier password or PIN.", "error");
       return;
     }
-    if (newPassword.length < 6) {
-      showPassToast("New password must be at least 6 characters long.", "error");
+    if (newPassword.length < 8) {
+      showPassToast("New password must be at least 8 characters long.", "error");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -175,10 +220,21 @@ export default function CashierProfile({ onProfileUpdate }: CashierProfileProps)
       return;
     }
 
-    showPassToast("Cashier security credentials updated successfully!");
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
+    try {
+      await updateCustomerPassword({
+        new_password: newPassword,
+        confirm_password: confirmPassword,
+      });
+      showPassToast("Cashier security credentials updated successfully!");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      showPassToast(
+        error instanceof Error ? error.message : "Could not update your password.",
+        "error",
+      );
+    }
   }
 
   function getInitials(nameStr: string): string {

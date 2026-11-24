@@ -9,6 +9,11 @@ export interface VerificationCodeData {
   verification_code: string;
 }
 
+export interface WelcomeEmailData {
+  to_email: string;
+  name: string;
+}
+
 export function isEmailJsConfigured(): boolean {
   return Boolean(
     process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID &&
@@ -72,6 +77,52 @@ export async function sendVerificationEmail(
 
     throw new Error(
       `EmailJS failed (${err.status ?? "unknown"}): ${
+        err.text ?? "Unable to send email"
+      }`
+    );
+  }
+}
+
+export async function sendWelcomeEmail(data: WelcomeEmailData): Promise<void> {
+  const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
+  const templateId =
+    process.env.NEXT_PUBLIC_EMAILJS_WELCOME_TEMPLATE_ID ||
+    process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
+  const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY;
+
+  const recipientEmail = data.to_email?.trim();
+  const recipientName = data.name?.trim() || "Customer";
+
+  if (!recipientEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail)) {
+    throw new Error("Please enter a valid recipient email address.");
+  }
+
+  if (!serviceId || !templateId || !publicKey) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Welcome email is not configured. Please contact the site administrator.");
+    }
+    console.info(
+      `[dev] Welcome email skipped for ${recipientEmail} (EmailJS is not configured).`
+    );
+    return;
+  }
+
+  try {
+    await emailjs.send(
+      serviceId,
+      templateId,
+      {
+        to_email: recipientEmail,
+        to_name: recipientName,
+        name: recipientName,
+      },
+      { publicKey }
+    );
+  } catch (error) {
+    const err = error as { status?: number; text?: string };
+    console.error("Welcome email error:", err.status, err.text);
+    throw new Error(
+      `Welcome email failed (${err.status ?? "unknown"}): ${
         err.text ?? "Unable to send email"
       }`
     );

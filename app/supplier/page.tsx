@@ -1,22 +1,53 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import SupplierSidebar, { type SupplierSection } from "./sidebar";
 import SupplierOverview from "./overview";
 import SupplierProducts from "./products";
+import SupplierSubmissions from "./submissions";
 import SupplierRequests from "./requests";
 import SupplierDeliveries from "./deliveries";
 import SupplierReturns from "./returns";
 import SupplierProfile from "./profile";
+import { clearSession, getSession } from "@/lib/auth";
 
 export default function SupplierPage() {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState<SupplierSection>("overview");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Reading localStorage during render would make the server and first client
+  // render disagree. Hydrate the session after mount instead.
+  const [session, setSession] = useState<ReturnType<typeof getSession>>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      setSession(getSession());
+      setAuthChecked(true);
+    });
+  }, []);
+
+  const authReady = authChecked && session?.role === "Supplier";
+
+  useEffect(() => {
+    if (!authChecked || authReady) return;
+    if (!session) {
+      router.replace("/login");
+      return;
+    }
+    router.replace(
+      session.role === "Admin"
+        ? "/admin"
+        : session.role === "Cashier"
+        ? "/cashier"
+        : "/customer",
+    );
+  }, [authChecked, authReady, router, session]);
 
   function handleLogout() {
+    clearSession();
     router.push("/login");
   }
 
@@ -26,6 +57,8 @@ export default function SupplierPage() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }
+
+  if (!authReady) return null;
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col lg:flex-row">
@@ -76,6 +109,7 @@ export default function SupplierPage() {
           )}
 
           {activeSection === "products" && <SupplierProducts />}
+          {activeSection === "submissions" && <SupplierSubmissions />}
           {activeSection === "requests" && <SupplierRequests />}
           {activeSection === "deliveries" && <SupplierDeliveries />}
           {activeSection === "returns" && <SupplierReturns />}

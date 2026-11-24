@@ -177,6 +177,7 @@ export default function ProductCard({
               fill
               sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 25vw"
               className="object-contain"
+              unoptimized
               onError={() => setImageError(true)}
             />
           ) : (

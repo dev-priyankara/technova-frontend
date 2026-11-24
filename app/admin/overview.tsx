@@ -50,9 +50,21 @@ interface DashboardData {
   recent_orders: DashboardOrder[];
 }
 
+interface AlertNotification {
+  id: number;
+  title: string;
+  message: string;
+  type: string;
+  is_read: boolean;
+  created_at: string;
+}
+
 export default function AdminOverview({ onNavigate }: OverviewProps) {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [error, setError] = useState("");
+  const [alertedProducts, setAlertedProducts] = useState<Set<number>>(new Set());
+  const [alertBusy, setAlertBusy] = useState<number | null>(null);
+  const [alertError, setAlertError] = useState("");
 
   useEffect(() => {
     apiFetch<DashboardData>("/admin/dashboard")
@@ -68,6 +80,22 @@ export default function AdminOverview({ onNavigate }: OverviewProps) {
   }));
   const posSales = dashboard?.recent_pos_sales ?? [];
   const orders = dashboard?.recent_orders ?? [];
+
+  async function alertSupplier(product: DashboardProduct) {
+    setAlertBusy(product.id);
+    setAlertError("");
+    try {
+      await apiFetch<AlertNotification>("/admin/low-stock-alerts", {
+        method: "POST",
+        body: JSON.stringify({ product_id: product.id }),
+      });
+      setAlertedProducts((previous) => new Set(previous).add(product.id));
+    } catch (err) {
+      setAlertError(err instanceof Error ? err.message : "Could not alert the supplier.");
+    } finally {
+      setAlertBusy(null);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -199,6 +227,12 @@ export default function AdminOverview({ onNavigate }: OverviewProps) {
             </button>
           </div>
 
+          {alertError && (
+            <p className="mb-3 text-xs font-semibold text-rose-300" role="alert">
+              {alertError}
+            </p>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {lowStockItems.map((item) => (
               <div
@@ -223,13 +257,27 @@ export default function AdminOverview({ onNavigate }: OverviewProps) {
                   SKU: {item.sku} • Current Stock:{" "}
                   <strong className="text-white">{item.stockQty}</strong> (Min: {item.minStockLevel})
                 </div>
-                <button
-                  type="button"
-                  onClick={() => onNavigate("suppliers")}
-                  className="block text-center w-full rounded-lg border border-blue-400/30 bg-blue-500/10 py-1.5 text-[11px] font-bold text-blue-300 hover:bg-blue-600 hover:text-white transition-all"
-                >
-                  Create Supply Request
-                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => alertSupplier(item)}
+                    disabled={alertBusy === item.id || alertedProducts.has(item.id)}
+                    className="rounded-lg border border-rose-400/30 bg-rose-500/10 py-1.5 text-[11px] font-bold text-rose-200 hover:bg-rose-500/30 hover:text-white transition-all disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {alertedProducts.has(item.id)
+                      ? "Alert Sent ✓"
+                      : alertBusy === item.id
+                      ? "Sending…"
+                      : "Alert Supplier"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate("suppliers")}
+                    className="rounded-lg border border-blue-400/30 bg-blue-500/10 py-1.5 text-[11px] font-bold text-blue-300 hover:bg-blue-600 hover:text-white transition-all"
+                  >
+                    Create Supply Request
+                  </button>
+                </div>
               </div>
             ))}
           </div>
